@@ -1,6 +1,7 @@
 import { Middleware } from '@reduxjs/toolkit';
-import { _webSocketConnected, _webSocketError, concatMessageList, _updateMessageStatus, setInfo, _webSocketClosed, closeSession } from './chatSlice';
+import { _webSocketConnected, _webSocketError, concatMessageList, _updateMessageStatus, setInfo, _webSocketClosed, sessionClosed } from './chatSlice';
 import HSTime from '../../utils/time';
+import { message as antdMessage } from 'antd';
 
 const isChatRegisterAction = (action: unknown): action is { type: 'chat/register'; payload: { url: string; userID: number } } => {
   return typeof action === 'object' && action !== null && 'type' in action && action.type === 'chat/register';
@@ -14,6 +15,10 @@ const isChatSendMessageAction = (
   action: unknown,
 ): action is { type: 'chat/sendMessage'; payload: { content: string; contentType: ContentTypes } } => {
   return typeof action === 'object' && action !== null && 'type' in action && action.type === 'chat/sendMessage';
+};
+
+const isShutDownSessionAction = (action: unknown): action is { type: 'chat/shutDownSession'; payload: { sessionID: number } } => {
+  return typeof action === 'object' && action !== null && 'type' in action && action.type === 'chat/shutDownSession';
 };
 
 const chatMiddleware: Middleware = (store) => {
@@ -83,7 +88,7 @@ const chatMiddleware: Middleware = (store) => {
         ackMsg([messageID]);
         return;
       } else if (message.seq === 'type-sessionClose') {
-        store.dispatch(closeSession());
+        store.dispatch(sessionClosed());
       } else {
         removeSeq(message);
       }
@@ -114,6 +119,9 @@ const chatMiddleware: Middleware = (store) => {
         break;
       case 'createSession':
         handleCreateSessionResponse(message as ReceiveMessage.createSessionResponse);
+        break;
+      case 'closeSession':
+        handleCloseSessionResponse(message as ReceiveMessage.CloseSessionResponse);
         break;
       default:
         break;
@@ -157,6 +165,11 @@ const chatMiddleware: Middleware = (store) => {
       data: { sessionID },
     } = message;
     store.dispatch(setInfo({ sessionID }));
+  };
+
+  const handleCloseSessionResponse = (message: ReceiveMessage.CloseSessionResponse) => {
+    const { data, codeMsg } = message;
+    if (!data) antdMessage.info(codeMsg);
   };
 
   // 通用发送消息函数
@@ -226,6 +239,19 @@ const chatMiddleware: Middleware = (store) => {
     _send(message);
   };
 
+  // 关闭会话
+  const closeSessionMsg = (sessionID: number) => {
+    store.dispatch(setInfo({ sessionID }));
+    const seq = addSeq('closeSession');
+    _send({
+      type: 'closeSession',
+      seq,
+      data: {
+        sessionID: sessionID,
+      },
+    });
+  };
+
   /** 注册连接 */
   const register = () => {
     console.log('registerConnection');
@@ -260,6 +286,8 @@ const chatMiddleware: Middleware = (store) => {
       createSession(action.payload.receiverID);
     } else if (isChatSendMessageAction(action)) {
       sendMsg(action.payload);
+    } else if (isShutDownSessionAction(action)) {
+      closeSessionMsg(action.payload.sessionID);
     }
     return next(action);
   };

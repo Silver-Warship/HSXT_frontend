@@ -1,6 +1,6 @@
 import request from '../utils/request';
 
-export type LoginParamsType = {
+export type LoginParams = {
   email: string;
   password?: string;
   verifyCode?: string;
@@ -10,7 +10,7 @@ export const login = ({
   email,
   password,
   verifyCode,
-}: LoginParamsType): Promise<{
+}: LoginParams): Promise<{
   code: number;
   codeMsg: string;
   token: string;
@@ -22,14 +22,18 @@ export const login = ({
   });
 };
 
+/** 根据header中的token获取用户信息 */
 export const getUserInfo = (): Promise<{
-  code: number;
-  codeMsg: string;
-  data: {
-    uid: string;
-    nickname: string;
-    email: string;
-  };
+  uid: string;
+  nickname: string;
+  email: string;
+  gender: 'male' | 'female' | 'unknown';
 }> => {
   return request.get('/api/tokenVerify');
+};
+
+export type EditUserInfoParams = { uid?: number; gender: GenderType; password?: string; nickname: string };
+
+export const editUserInfo = (data: EditUserInfoParams) => {
+  return request.post('/api/user/editprofile', data);
 };

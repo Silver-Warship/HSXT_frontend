@@ -19,7 +19,7 @@ export default function ChooseConsultant() {
       isIdle: boolean;
       uid: string;
     }[]
-  >([]);
+  >();
 
   useEffect(() => {
     request
@@ -47,6 +47,7 @@ export default function ChooseConsultant() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { sessionID } = useSelector((state: RootState) => state.chat);
+  const { uid } = useSelector((state: RootState) => state.user);
 
   const [receiver, setReceiver] = useState('');
 
@@ -54,7 +55,7 @@ export default function ChooseConsultant() {
     if (sessionID && receiver && sessionID !== -1) {
       console.log('sessionID', sessionID);
       // 替换当前页面
-      navigate(`/chat/${receiver}-${sessionID}`);
+      navigate(`/chat/${uid}-${receiver}-${sessionID}`);
     }
   }, [sessionID, receiver]);
 
@@ -66,16 +67,20 @@ export default function ChooseConsultant() {
       <div className='w-full px-5'>
         {/* 卡片列表 */}
         <Flex vertical gap={8}>
-          {consultants.map((consultant, index) => (
-            <ConsultantCard
-              key={index}
-              {...consultant}
-              onStart={() => {
-                setReceiver(consultant.uid);
-                dispatch(createSession({ receiverID: Number(consultant.uid) }));
-              }}
-            />
-          ))}
+          {!consultants ? (
+            <Spin size='large' />
+          ) : (
+            consultants.map((consultant, index) => (
+              <ConsultantCard
+                key={index}
+                {...consultant}
+                onStart={() => {
+                  setReceiver(consultant.uid);
+                  dispatch(createSession({ receiverID: Number(consultant.uid) }));
+                }}
+              />
+            ))
+          )}
         </Flex>
       </div>
       <Modal

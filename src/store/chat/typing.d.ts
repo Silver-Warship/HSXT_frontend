@@ -1,4 +1,4 @@
-type MessageTypes = 'sendMsg' | 'requestMsg' | 'ackMsg' | 'registerConnection' | 'createSession';
+type MessageTypes = 'sendMsg' | 'requestMsg' | 'ackMsg' | 'registerConnection' | 'createSession' | 'closeSession';
 type ContentTypes = 'TEXT' | 'IMAGE' | 'VOICE' | 'FILE' | 'BIGFILE';
 type MessageStatus = 'success' | 'fail' | 'pending';
 
@@ -40,14 +40,16 @@ namespace ReceiveMessage {
   type createSessionData = {
     sessionID: number;
   };
+  type CloseSessionData = null | { sessionID: number };
 
   type SendMsgResponse = Wrapper & { data: SendMsgData };
   type RequestMsgResponse = Wrapper & { data: RequestMsgData };
   type AckMsgResponse = Wrapper & { data: AckMsgData };
   type RegisterConnectionResponse = Wrapper & { data: RegisterConnectionData };
   type createSessionResponse = Wrapper & { data: createSessionData };
+  type CloseSessionResponse = Wrapper & { data: CloseSessionData };
 
-  type Response = SendMsgResponse | RequestMsgResponse | AckMsgResponse | RegisterConnectionResponse | createSessionResponse;
+  type Response = SendMsgResponse | RequestMsgResponse | AckMsgResponse | RegisterConnectionResponse | createSessionResponse | CloseSessionResponse;
 }
 
 // 发送的消息类型
@@ -81,12 +83,16 @@ namespace SendMessage {
     secondUserID: number;
     sessionStartTime: number;
   };
+  type CloseSessionData = {
+    sessionID: number;
+  };
 
   type SendMsg = Wrapper & { data: SendMsgData };
   type RequestMsg = Wrapper & { data: RequestMsgData };
   type AckMsg = Wrapper & { data: AckMsgData };
   type RegisterConnection = Wrapper & { data: RegisterConnectionData };
   type createSession = Wrapper & { data: createSessionData };
+  type CloseSession = Wrapper & { data: CloseSessionData };
 
-  type Message = SendMsg | RequestMsg | AckMsg | RegisterConnection | createSession;
+  type Message = SendMsg | RequestMsg | AckMsg | RegisterConnection | createSession | CloseSession;
 }

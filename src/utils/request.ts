@@ -1,3 +1,4 @@
+import { message } from 'antd';
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 // 创建 Axios 实例
@@ -39,7 +40,11 @@ instance.interceptors.response.use(
         case 401:
           // 处理未授权错误，例如跳转到登录页面
           console.log('未授权，请重新登录');
+          message.error('未授权，请重新登录');
           localStorage.setItem('token', '');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
           break;
         case 404:
           console.log('请求的资源不存在');

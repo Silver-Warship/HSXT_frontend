@@ -3,23 +3,32 @@
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-weight: 400;
+  font-size: 16px;
 
   color-scheme: light dark;
   color: #181818;
-  background-color: #f2f2f2;
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  max-width: 1280px;
-  margin: 0 auto;
-  text-align: center;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+}
+
+@theme {
+  --color-black-first: #181818;
+  --color-black-second: #7b7b7b;
+  --color-black-third: #acacac;
+  --color-black-fourth: #d2d2d2;
+  --color-black-fifth: #dddddd;
+  --color-theme-green: #c3e006;
+  --color-theme-gray: #f5f5f5;
+  --color-chat-bg: #d3f83b;
+  --bg-admin-login: url('/admin_login_bg.png');
 }

@@ -33,7 +33,6 @@ export default ({ mode }: { mode: string }) => {
       // 配置代理
       proxy: {
         '/api': {
-          // target: 'http://172.30.165.61:8080/api', // 接口地址
           target: env.VITE_APP_HTTP_URL,
           changeOrigin: true, // 接口跨域
           rewrite: (path) => path.replace(/^\/api/, ''),

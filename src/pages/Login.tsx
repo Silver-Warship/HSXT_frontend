@@ -1,7 +1,7 @@
 import { Form, message, Tabs } from 'antd';
 import { LoginForm, ProFormCaptcha, ProFormText } from '@ant-design/pro-components';
 import { useNavigate } from 'react-router-dom';
-import { login, LoginParamsType } from '../service/users';
+import { login, LoginParams } from '../service/users';
 import { LockOutlined, MobileOutlined, UserOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 
@@ -20,7 +20,7 @@ export default function LoginPage() {
   }) => {
     const { username, password, email, verifyCode } = values;
 
-    let params: LoginParamsType = { email: '' };
+    let params: LoginParams = { email: '' };
     if (loginType === 'password') {
       params = {
         email: username,
@@ -35,7 +35,6 @@ export default function LoginPage() {
 
     try {
       const res = await login(params);
-      console.log(res);
       const { code, codeMsg, token } = res;
       if (code === 600) {
         // 正常情况，直接存储token并重定向到home页面
@@ -60,7 +59,7 @@ export default function LoginPage() {
 
   return (
     <div>
-      <div className='mx-auto mt-[5vh]'>
+      <div className='mx-auto pt-[5vh]'>
         <LoginForm
           logo='https://github.githubassets.com/favicons/favicon.png'
           title='花狮心途'

@@ -44,10 +44,9 @@ const chatSlice = createSlice({
       state.receiverID = receiverID;
       state.isSessionClosed = false;
     },
-    // 设置会话ID
+    // 设置会话ID，仅被中间件使用
     setInfo(state, action: PayloadAction<{ sessionID: number }>) {
-      const { sessionID } = action.payload;
-      state.sessionID = sessionID;
+      state.sessionID = action.payload.sessionID;
     },
     // 成功连接websocket
     _webSocketConnected(state) {
@@ -82,12 +81,19 @@ const chatSlice = createSlice({
         item.seq === action.payload.seq ? { ...item, messageID: action.payload.messageID, status: 'success' } : item,
       );
     },
-    closeSession(state) {
+    // 会话被动关闭
+    sessionClosed(state) {
       state.sessionID = -1;
       state.receiverID = -1;
       state.messageList = [];
       state.isSessionClosed = true;
+      message.info('会话已关闭！');
     },
+    sessionClosedFail() {
+      message.error('关闭会话失败！');
+    },
+    // 用户主动关闭会话
+    shutDownSession(state, action: PayloadAction<{ sessionID: number }>) {},
   },
 });
 
@@ -102,7 +108,8 @@ export const {
   setInfo,
   register,
   createSession,
-  closeSession,
+  sessionClosed,
+  shutDownSession,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;
