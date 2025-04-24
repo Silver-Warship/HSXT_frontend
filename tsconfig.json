@@ -1,23 +1,19 @@
 {
-  "files": [],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
-    },
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ],
+  "extends": "@tsconfig/vite-react/tsconfig.json",
   "compilerOptions": {
-    // 路径映射配置
-    "baseUrl": "./",
+    "baseUrl": "./", // 设置基准路径
     "paths": {
-      "@": [
-        "src"
-      ],
       "@/*": [
         "src/*"
-      ],
+      ] // 路径别名配置
     }
   },
+  "include": [
+    "src/**/*" // 包含的文件路径
+  ],
+  "exclude": [
+    "node_modules", // 排除 node_modules 目录
+    "build", // 排除构建产物目录
+    "dist" // 排除 dist 目录
+  ]
 }

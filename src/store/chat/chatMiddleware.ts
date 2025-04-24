@@ -31,6 +31,24 @@ const chatMiddleware: Middleware = (store) => {
     type: MessageTypes;
   }[] = []; // 请求池
 
+  let heartbeatInterval: number | null = null;
+
+  const startHeartbeat = () => {
+    heartbeatInterval = setInterval(() => {
+      _send({
+        type: 'Heartbeat',
+        data: null,
+      });
+    }, 10000); // 每10秒发一次
+  };
+
+  const stopHeartbeat = () => {
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+  };
+
   const connect = (url: string) => {
     socket = new WebSocket(url);
 
@@ -40,10 +58,12 @@ const chatMiddleware: Middleware = (store) => {
       if (store.getState().chat.sessionID !== -1) {
         requestMsg();
       }
+      startHeartbeat(); // 开始心跳包
     };
 
     socket.onclose = (event) => {
       store.dispatch(_webSocketClosed({ code: event.code }));
+      stopHeartbeat(); // 停止心跳包
       if (reconnectCount < reconnectAttempts) {
         setTimeout(() => {
           reconnectCount++;
@@ -54,6 +74,7 @@ const chatMiddleware: Middleware = (store) => {
 
     socket.onerror = (event) => {
       store.dispatch(_webSocketError({ event }));
+      stopHeartbeat(); // 停止心跳包
     };
 
     socket.onmessage = (event) => {

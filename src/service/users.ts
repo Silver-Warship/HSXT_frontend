@@ -23,13 +23,16 @@ export const login = ({
 };
 
 /** 根据header中的token获取用户信息 */
-export const getUserInfo = (): Promise<{
+export const getUserInfo = (
+  usertype: 'visitor' | 'counsellor' | 'supervisor' | 'admin' | null,
+): Promise<{
   uid: string;
   nickname: string;
   email: string;
   gender: 'male' | 'female' | 'unknown';
 }> => {
-  return request.get('/api/tokenVerify');
+  if (!usertype) Promise.reject();
+  return request.get(`/api/tokenVerify?role=${usertype}`);
 };
 
 export type EditUserInfoParams = { uid?: number; gender: GenderType; password?: string; nickname: string };

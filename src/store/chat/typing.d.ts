@@ -1,4 +1,4 @@
-type MessageTypes = 'sendMsg' | 'requestMsg' | 'ackMsg' | 'registerConnection' | 'createSession' | 'closeSession';
+type MessageTypes = 'sendMsg' | 'requestMsg' | 'ackMsg' | 'registerConnection' | 'createSession' | 'closeSession' | 'Heartbeat';
 type ContentTypes = 'TEXT' | 'IMAGE' | 'VOICE' | 'FILE' | 'BIGFILE';
 type MessageStatus = 'success' | 'fail' | 'pending';
 
@@ -86,6 +86,7 @@ namespace SendMessage {
   type CloseSessionData = {
     sessionID: number;
   };
+  type HeartbeatData = null;
 
   type SendMsg = Wrapper & { data: SendMsgData };
   type RequestMsg = Wrapper & { data: RequestMsgData };
@@ -93,6 +94,7 @@ namespace SendMessage {
   type RegisterConnection = Wrapper & { data: RegisterConnectionData };
   type createSession = Wrapper & { data: createSessionData };
   type CloseSession = Wrapper & { data: CloseSessionData };
+  type Heartbeat = { type: MessageTypes; data: HeartbeatData };
 
-  type Message = SendMsg | RequestMsg | AckMsg | RegisterConnection | createSession | CloseSession;
+  type Message = SendMsg | RequestMsg | AckMsg | RegisterConnection | createSession | CloseSession | Heartbeat;
 }

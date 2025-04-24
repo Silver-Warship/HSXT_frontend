@@ -1,4 +1,6 @@
 import { Button, Card, Splitter } from 'antd';
+import AdminChat from './AdminChat';
+import { BulbTwoTone } from '@ant-design/icons';
 
 const Session = () => {
   return (
@@ -24,10 +26,17 @@ const Session = () => {
       }
     >
       <Splitter className='h-full'>
-        <Splitter.Panel defaultSize='40%' min='20%' max='70%'>
-          first
+        <Splitter.Panel defaultSize='70%' min='30%' max='70%'>
+          <AdminChat />
         </Splitter.Panel>
-        <Splitter.Panel>second</Splitter.Panel>
+        <Splitter.Panel>
+          <div className='h-full w-full flex items-center justify-center'>
+            <div className='cursor-pointer flex flex-col items-center gap-4 border border-gray-200 hover:bg-gray-100 transition p-4 px-6 rounded-md'>
+              <BulbTwoTone className='text-[60px]' />
+              <p className='text-base select-none'>求助督导</p>
+            </div>
+          </div>
+        </Splitter.Panel>
       </Splitter>
     </Card>
   );

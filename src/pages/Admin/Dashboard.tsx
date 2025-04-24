@@ -1,7 +1,8 @@
 import { DualAxes } from '@ant-design/charts';
-import { BellTwoTone, CalendarOutlined, CheckCircleTwoTone, ClockCircleTwoTone, LikeTwoTone, StarTwoTone } from '@ant-design/icons';
+import { BellTwoTone, CalendarOutlined, LikeTwoTone, StarTwoTone } from '@ant-design/icons';
 import { Calendar, Card, Col, Row, Statistic } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
+import { ChatRecordTable } from './ChatRecord';
 
 const dutyDays: {
   [year: number]: {
@@ -9,56 +10,44 @@ const dutyDays: {
   };
 } = {
   2025: {
-    4: [1, 13, 25],
+    4: [1, 13, 14, 25],
     5: [2, 14, 26],
   },
 };
 
 const Dashboard = () => {
   const uvData = [
-    { time: '2019-03', value: 35 },
-    { time: '2019-04', value: 90 },
-    { time: '2019-05', value: 30 },
-    { time: '2019-06', value: 45 },
-    { time: '2019-07', value: 47 },
+    { time: '2019-03', 咨询时长: 35 },
+    { time: '2019-04', 咨询时长: 90 },
+    { time: '2019-05', 咨询时长: 30 },
+    { time: '2019-06', 咨询时长: 45 },
+    { time: '2019-07', 咨询时长: 47 },
   ];
 
   const transformData = [
-    { time: '2019-03', count: 800, name: 'a' },
-    { time: '2019-04', count: 600, name: 'a' },
-    { time: '2019-05', count: 400, name: 'a' },
-    { time: '2019-06', count: 380, name: 'a' },
-    { time: '2019-07', count: 220, name: 'a' },
-    { time: '2019-03', count: 750, name: 'b' },
-    { time: '2019-04', count: 650, name: 'b' },
-    { time: '2019-05', count: 450, name: 'b' },
-    { time: '2019-06', count: 400, name: 'b' },
-    { time: '2019-07', count: 320, name: 'b' },
-    { time: '2019-03', count: 900, name: 'c' },
-    { time: '2019-04', count: 600, name: 'c' },
-    { time: '2019-05', count: 450, name: 'c' },
-    { time: '2019-06', count: 300, name: 'c' },
-    { time: '2019-07', count: 200, name: 'c' },
+    { time: '2019-03', 咨询次数: 12 },
+    { time: '2019-04', 咨询次数: 6 },
+    { time: '2019-05', 咨询次数: 4 },
+    { time: '2019-06', 咨询次数: 20 },
+    { time: '2019-07', 咨询次数: 16 },
   ];
 
   const config = {
     xField: 'time',
     legend: true,
     scale: { color: { range: ['#1783FF', '#5AD8A6', '#5D7092', '#F6BD16'] } },
-    interaction: { tooltip: { sort: (d: { name: string }) => ['value', 'a', 'b', 'c'].indexOf(d.name) } },
+    interaction: { tooltip: {} },
     children: [
       {
         data: uvData,
         type: 'interval',
-        yField: 'value',
+        yField: '咨询时长',
         style: { maxWidth: 80 },
       },
       {
         data: transformData,
         type: 'line',
-        yField: 'count',
-        colorField: 'name',
-        seriesField: 'name',
+        yField: '咨询次数',
         axis: { y: { position: 'right' } },
         style: { lineWidth: 2 },
       },
@@ -70,8 +59,8 @@ const Dashboard = () => {
       <Row gutter={[16, 16]}>
         <Col span={14}>
           <Row className='h-full' gutter={[16, 16]}>
-            <Col span={8}>
-              <Card variant='borderless'>
+            <Col style={{ display: 'inline-flex' }} span={8}>
+              <Card className='w-full' variant='borderless'>
                 <Statistic
                   title='当前综合评价'
                   value={4.23}
@@ -80,34 +69,19 @@ const Dashboard = () => {
                 />
               </Card>
             </Col>
-            <Col span={8}>
-              <Card variant='borderless'>
-                <Statistic title='今日已完成咨询数' value={12} prefix={<CheckCircleTwoTone twoToneColor='#52c41a' />} />
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card variant='borderless'>
-                <Statistic title='今日咨询总时长' value={'12:30:20'} prefix={<ClockCircleTwoTone />} />
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card variant='borderless'>
+            <Col style={{ display: 'inline-flex' }} span={8}>
+              <Card className='w-full' variant='borderless'>
                 <Statistic title='进行中的咨询' value={3} prefix={<BellTwoTone twoToneColor='#eb2f96' />} />
               </Card>
             </Col>
-            <Col span={8}>
-              <Card variant='borderless'>
-                <Statistic title='累计完成咨询' value={132} prefix={<LikeTwoTone twoToneColor='#52c41a' />} />
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card variant='borderless'>
+            <Col style={{ display: 'inline-flex' }} span={8}>
+              <Card className='w-full' variant='borderless'>
                 <Statistic title='累计完成咨询' value={132} prefix={<LikeTwoTone twoToneColor='#52c41a' />} />
               </Card>
             </Col>
             <Col style={{ display: 'flex' }} span={24}>
               <Card className='h-full w-full'>
-                <DualAxes height={250} {...config} />
+                <DualAxes height={360} {...config} />
               </Card>
             </Col>
           </Row>
@@ -124,8 +98,8 @@ const Dashboard = () => {
                 const isToday = today.isSame(current, 'day');
                 return (
                   <div
-                    className={`relative h-16 border-t-2 mx-1 my-[1px] px-2 pt-1 ${
-                      isDutyDay ? (isToday ? 'font-medium text-white border-blue-500 bg-blue-500' : 'bg-blue-50 border-gray-200') : 'border-gray-200'
+                    className={`relative h-16 border-t-2 mx-1 my-[1px] px-2 pt-1 ${isDutyDay ? 'bg-blue-50' : ''} ${
+                      isToday ? 'font-medium text-white border-blue-500 bg-blue-500' : 'border-gray-200'
                     }`}
                   >
                     {current.format('DD')}
@@ -137,6 +111,26 @@ const Dashboard = () => {
                   </div>
                 );
               }}
+            />
+          </Card>
+        </Col>
+        <Col span={24}>
+          <Card>
+            <div className='text-[18px] mb-4'>近期咨询记录</div>
+            <ChatRecordTable
+              pagination={false}
+              dataSource={[
+                {
+                  key: 1,
+                  consultant: '1',
+                  visitor: '2',
+                  duration: '00:12:54',
+                  date: dayjs('2024-10-10 13:24:00', 'YYYY-MM-DD HH:mm:ss'),
+                  score: 4,
+                  comment: '很好，很专业很好，很专业很好，很专业很好，很专业很好，很专业很好，很专业很好，很专业',
+                  help: '无',
+                },
+              ]}
             />
           </Card>
         </Col>

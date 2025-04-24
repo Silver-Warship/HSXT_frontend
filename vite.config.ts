@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default ({ mode }: { mode: string }) => {
   const env = loadEnv(mode, process.cwd()); // 获取.env文件里定义的环境变量
@@ -8,6 +9,11 @@ export default ({ mode }: { mode: string }) => {
   return defineConfig({
     base: './',
     publicDir: 'public',
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'src'), // ✅ 添加别名配置
+      },
+    },
     build: {
       target: 'modules', // 浏览器兼容目标
       outDir: 'dist', // 打包输出路径

@@ -1,24 +1,40 @@
 import { Form, message, Tabs } from 'antd';
-import { LoginForm, ProFormCaptcha, ProFormText } from '@ant-design/pro-components';
+import { LoginForm, ProFormCaptcha, ProFormSelect, ProFormText } from '@ant-design/pro-components';
 import { useNavigate } from 'react-router-dom';
 import { login, LoginParams } from '../service/users';
-import { LockOutlined, MobileOutlined, UserOutlined } from '@ant-design/icons';
+import { LockOutlined, MailOutlined, MobileOutlined, UserOutlined } from '@ant-design/icons';
 import { useState } from 'react';
+import { adminLogin, consultantLogin, supervisorLogin } from '@/service/Admin/user';
+import { useDispatch } from 'react-redux';
+import { setUserInfo } from '@/store/user/userSlice';
 
 type LoginType = 'password' | 'verifyCode';
 
-export default function LoginPage() {
+function setItemAsync(key: string, value: string) {
+  return new Promise<void>((resolve, reject) => {
+    try {
+      localStorage.setItem(key, value);
+      resolve();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+export default function LoginPage({ isAdmin = false }: { isAdmin?: boolean }) {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [loginType, setLoginType] = useState<LoginType>('verifyCode');
   const [form] = Form.useForm();
 
   const onFinish = async (values: {
+    usertype?: 'consultant' | 'supervisor' | 'admin';
     username: string; // 密码登录时的邮箱
     password: string; // 密码
     email: string; // 验证码登录时的邮箱
     verifyCode: string; // 验证码
   }) => {
-    const { username, password, email, verifyCode } = values;
+    const { username, password, email, verifyCode, usertype = 'visitor' } = values;
 
     let params: LoginParams = { email: '' };
     if (loginType === 'password') {
@@ -34,15 +50,36 @@ export default function LoginPage() {
     }
 
     try {
-      const res = await login(params);
-      const { code, codeMsg, token } = res;
+      // const res = await login(params);
+      let res;
+      if (!isAdmin) res = await login(params);
+      else {
+        switch (usertype) {
+          case 'admin':
+            res = await adminLogin(params);
+            break;
+          case 'consultant':
+            res = await consultantLogin(params);
+            break;
+          case 'supervisor':
+            res = await supervisorLogin(params);
+            break;
+          default:
+            console.error('出错啦！');
+            return;
+        }
+      }
+      const { code, codeMsg, token } = res!;
       if (code === 600) {
         // 正常情况，直接存储token并重定向到home页面
-        localStorage.setItem('token', token);
-        message.success('登录成功！');
-        setTimeout(() => {
-          navigate('/home');
-        }, 0);
+        // localStorage.setItem('token', token);
+        // message.success('登录成功！');
+        // navigate('/home');
+        setItemAsync('token', token).then(() => {
+          message.success('登录成功！');
+          navigate('/');
+          dispatch(setUserInfo({ usertype }));
+        });
       } else {
         message.error(`登录失败！${codeMsg}`);
         form.setFieldsValue({
@@ -84,26 +121,56 @@ export default function LoginPage() {
               },
             ]}
           />
+          {isAdmin && (
+            <ProFormSelect
+              name='usertype'
+              options={[
+                {
+                  label: '咨询师',
+                  value: 'consultant',
+                },
+                {
+                  label: '督导',
+                  value: 'supervisor',
+                },
+                {
+                  label: '管理员',
+                  value: 'admin',
+                },
+              ]}
+              fieldProps={{
+                size: 'large',
+                prefix: <UserOutlined />,
+              }}
+              placeholder='选择身份'
+              rules={[
+                {
+                  required: true,
+                  message: '请选择身份!',
+                },
+              ]}
+            />
+          )}
+          <ProFormText
+            name='username'
+            fieldProps={{
+              size: 'large',
+              prefix: <MailOutlined />,
+            }}
+            placeholder='邮箱'
+            rules={[
+              {
+                required: true,
+                message: '请输入邮箱!',
+              },
+              {
+                type: 'email',
+                message: '邮箱格式错误！',
+              },
+            ]}
+          />
           {loginType === 'password' && (
             <>
-              <ProFormText
-                name='username'
-                fieldProps={{
-                  size: 'large',
-                  prefix: <UserOutlined className={'prefixIcon'} />,
-                }}
-                placeholder={'邮箱'}
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入邮箱!',
-                  },
-                  {
-                    pattern: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
-                    message: '邮箱格式错误！',
-                  },
-                ]}
-              />
               <ProFormText.Password
                 name='password'
                 fieldProps={{
@@ -120,73 +187,49 @@ export default function LoginPage() {
                     max: 16,
                     message: '密码长度不能超过16位！',
                   },
-                  // {
-                  //   pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,16}$/,
-                  //   message: '密码至少包含大小写字母和数字，长度至少8位！',
-                  // },
                 ]}
               />
             </>
           )}
           {loginType === 'verifyCode' && (
-            <>
-              <ProFormText
-                fieldProps={{
-                  size: 'large',
-                  prefix: <MobileOutlined className={'prefixIcon'} />,
-                }}
-                name='email'
-                placeholder={'邮箱'}
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入邮箱！',
-                  },
-                  {
-                    pattern: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
-                    message: '邮箱格式错误！',
-                  },
-                ]}
-              />
-              <ProFormCaptcha
-                fieldProps={{
-                  size: 'large',
-                  prefix: <LockOutlined className={'prefixIcon'} />,
-                }}
-                captchaProps={{
-                  size: 'large',
-                }}
-                placeholder={'验证码'}
-                captchaTextRender={(timing, count) => {
-                  if (timing) {
-                    return `${count} ${'获取验证码'}`;
-                  }
-                  return '获取验证码';
-                }}
-                name='verifyCode'
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入验证码！',
-                  },
-                ]}
-                onGetCaptcha={async () => {
-                  const { email } = form.getFieldsValue();
-                  console.log(email);
-                  const res = await login({ email });
-                  console.log(res);
-                  const { code, codeMsg } = res;
-                  if (code === 600) {
-                    message.success('验证码发送成功！');
-                  } else {
-                    message.error(`发送失败！${codeMsg}`);
-                    form.setFieldsValue({
-                      verifyCode: '',
-                    });
-                  }
-                }}
-              />
-            </>
+            <ProFormCaptcha
+              fieldProps={{
+                size: 'large',
+                prefix: <LockOutlined className={'prefixIcon'} />,
+              }}
+              captchaProps={{
+                size: 'large',
+              }}
+              placeholder={'验证码'}
+              captchaTextRender={(timing, count) => {
+                if (timing) {
+                  return `${count} ${'获取验证码'}`;
+                }
+                return '获取验证码';
+              }}
+              name='verifyCode'
+              rules={[
+                {
+                  required: true,
+                  message: '请输入验证码！',
+                },
+              ]}
+              onGetCaptcha={async () => {
+                const { email } = form.getFieldsValue();
+                console.log(email);
+                const res = await login({ email });
+                console.log(res);
+                const { code, codeMsg } = res;
+                if (code === 600) {
+                  message.success('验证码发送成功！');
+                } else {
+                  message.error(`发送失败！${codeMsg}`);
+                  form.setFieldsValue({
+                    verifyCode: '',
+                  });
+                }
+              }}
+            />
           )}
           {loginType === 'password' && (
             <div className='text-end mb-4'>

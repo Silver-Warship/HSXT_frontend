@@ -36,7 +36,7 @@ export default function ConsultRecord() {
             {/* 我的评价 */}
             <div className='mb-3 flex flex-row gap-4 items-center'>
               <p>我的评价</p>
-              <Rate disabled defaultValue={2} />
+              <Rate disabled allowHalf defaultValue={2} />
             </div>
             {/* 按钮组 */}
             <div className='flex justify-end gap-2'>

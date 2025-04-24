@@ -11,13 +11,14 @@ import {
 import { Avatar, Dropdown, Input, Layout, Menu, Modal, Select, Form } from 'antd';
 import { Header, Content } from 'antd/es/layout/layout';
 import Sider from 'antd/es/layout/Sider';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { RootState } from '../store/store';
 import { setUserInfo } from '../store/user/userSlice';
+import { getUserInfo } from '@/service/users';
 
-const authTable: Record<string, UserType[]> = {
+const authTable: Record<string, (UserType | '')[]> = {
   dashboard: ['consultant', 'supervisor', 'admin'],
   record: ['consultant', 'supervisor', 'admin'],
   sessions: ['consultant', 'supervisor'],
@@ -52,6 +53,16 @@ const AdminLayout = () => {
   const location = useLocation();
   const currentKey = location.pathname.split('/').pop() ?? 'dashboard';
 
+  useEffect(() => {
+    getUserInfo(usertype === 'consultant' ? 'counsellor' : usertype)
+      .then((res) => {
+        dispatch(setUserInfo(res));
+      })
+      .catch((e) => {
+        console.error('获取用户信息出错', e);
+      });
+  }, []);
+
   const items = useMemo(
     () =>
       [
@@ -62,7 +73,7 @@ const AdminLayout = () => {
         getItem('咨询师管理', 'manage-consultant', <TeamOutlined />), // 管理员
         getItem('访客管理', 'manage-visitor', <UserSwitchOutlined />), // 管理员
         getItem('排班表', 'schedule', <CalendarOutlined />), // 管理员
-      ].filter(({ key }) => authTable[key].includes(usertype)),
+      ].filter(({ key }) => authTable[key].includes(usertype ?? '')),
     [usertype],
   );
 
@@ -118,6 +129,10 @@ const AdminLayout = () => {
                 value: 'supervisor',
                 label: '督导',
               },
+              {
+                value: 'visitor',
+                label: '访客',
+              },
             ]}
           />
           <Dropdown
@@ -143,11 +158,12 @@ const AdminLayout = () => {
                 },
               ],
               onClick: ({ key }) => {
-                console.log(`Click on item ${key}`);
                 if (key === '1') {
                   showModal();
                 } else if (key === '2') {
                   // 退出登录逻辑
+                  localStorage.removeItem('token');
+                  navigate('/admin/login');
                 }
               },
             }}
@@ -170,13 +186,11 @@ const AdminLayout = () => {
             items={items}
           />
         </Sider>
-        <Content className='px-4 overflow-y-auto'>
-          <div className='p-6 min-h-[360px] h-full'>
-            <Outlet />
-          </div>
+        <Content className='px-10 py-6 min-h-[360px] overflow-y-auto'>
+          <Outlet />
         </Content>
       </Layout>
-      <Modal title='更新个人信息' open={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
+      <Modal title='更新个人信息' styles={{ header: { marginBottom: '16px' } }} open={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
         <Form
           form={form}
           name='update_info'

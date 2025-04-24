@@ -41,7 +41,7 @@ instance.interceptors.response.use(
           // 处理未授权错误，例如跳转到登录页面
           console.log('未授权，请重新登录');
           message.error('未授权，请重新登录');
-          localStorage.setItem('token', '');
+          localStorage.removeItem('token');
           setTimeout(() => {
             window.location.reload();
           }, 1000);

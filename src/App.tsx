@@ -2,7 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
-import { Authed } from './router/Auth';
+import { Authed, AdminAuthed } from './router/Auth';
 import ChooseConsultant from './pages/ChooseConsultant';
 import Chat from './pages/Chat';
 import UserProfile from './pages/UserProfile';
@@ -44,19 +44,19 @@ function App() {
             path='login'
             element={
               <div className="h-[100vh] bg-[url('/admin_login_bg.png')] bg-[100%]">
-                <Login />
+                <Login isAdmin={true} />
               </div>
             }
           />
           {/* 首页 */}
           <Route element={<AdminLayout />}>
-            <Route path='dashboard' element={<Dashboard />} />
-            <Route path='record' element={<ChatRecord />} />
-            <Route path='session/:id' element={<Session />} />
-            <Route path='manage-supervisor' element={<ManageSupervisor />} />
-            <Route path='manage-consultant' element={<ManageConsultant />} />
-            <Route path='manage-visitor' element={<ManageVisitor />} />
-            <Route path='schedule' element={<Schedule />} />
+            <Route path='dashboard' element={AdminAuthed(<Dashboard />)} />
+            <Route path='record' element={AdminAuthed(<ChatRecord />)} />
+            <Route path='session/:info' element={AdminAuthed(<Session />)} />
+            <Route path='manage-supervisor' element={AdminAuthed(<ManageSupervisor />)} />
+            <Route path='manage-consultant' element={AdminAuthed(<ManageConsultant />)} />
+            <Route path='manage-visitor' element={AdminAuthed(<ManageVisitor />)} />
+            <Route path='schedule' element={AdminAuthed(<Schedule />)} />
           </Route>
         </Route>
       </Routes>

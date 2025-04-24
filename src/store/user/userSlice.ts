@@ -7,16 +7,16 @@ interface UserState {
   uid: string;
   nickname: string;
   email: string;
-  gender: GenderType;
-  usertype: UserType;
+  gender: GenderType | null;
+  usertype: UserType | null;
 }
 
 const initialState: UserState = {
   uid: '',
   nickname: '',
   email: '',
-  gender: 'unknown',
-  usertype: 'consultant',
+  gender: null,
+  usertype: null,
 };
 
 const userSlice = createSlice({

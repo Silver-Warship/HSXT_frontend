@@ -42,7 +42,7 @@ export default function Home() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    getUserInfo()
+    getUserInfo('visitor')
       .then((res) => {
         dispatch(setUserInfo(res));
       })
