@@ -1,10 +1,11 @@
 import { LeftOutlined, SendOutlined } from '@ant-design/icons';
 import { ConfigProvider, Flex, Form, Input, Space, Image, message, Modal } from 'antd';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 import { initSession, sendMessage } from '../store/chat/chatSlice';
+import { Button } from "antd";
 
 export default function Chat() {
   const [form] = Form.useForm();
@@ -13,6 +14,13 @@ export default function Chat() {
   const dispatch = useDispatch();
   const { info } = useParams();
   const { uid } = useSelector((state: RootState) => state.user);
+  const [inputMode, setInputMode] = useState<string>('TEXT');
+  const [blob, setBlob] = useState<Blob | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
     if (info) {
@@ -59,6 +67,23 @@ export default function Chat() {
     });
   };
 
+  const sendAudio = () => {
+    // convert blob to base64
+    const reader = new FileReader();
+    reader.readAsDataURL(recordedBlob!);
+    reader.onloadend = () => {
+      const base64data = reader.result as string;
+      const message = {
+        content: base64data,
+        contentType: 'AUDIO',
+      };
+      dispatch(sendMessage(message));
+      setRecordedBlob(null);
+      setIsRecording(false);
+      _scrollToBottom();
+    }
+  };
+
   const handleConfirm = () => {
     Modal.confirm({
       title: '确认结束咨询吗？',
@@ -70,6 +95,47 @@ export default function Chat() {
         console.log('用户选择了否，不结束咨询');
       },
     });
+  };
+
+  const handleRecordStart = () => {
+      console.log("Recording started...");
+      setIsRecording(true);
+      chunksRef.current = [];
+      if (!navigator.mediaDevices) {
+          console.error("Your browser does not support media devices.");
+          return;
+      }
+      navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+          const mediaRecorder = new MediaRecorder(stream);
+          mediaRecorderRef.current = mediaRecorder;
+
+          mediaRecorder.start();
+  
+          mediaRecorder.ondataavailable = event => {
+          if (event.data.size > 0) {
+              chunksRef.current.push(event.data);
+          }
+          };
+  
+          mediaRecorder.onstop = () => {
+              const blob = new Blob(chunksRef.current, { type: 'audio/wav' });
+              setRecordedBlob(blob);
+          };
+      })
+      .catch(err => {
+          console.error("Error accessing microphone: ", err);
+      });
+  };
+  
+  const handleRecordStop = () => {  
+    console.log("Recording stopped.");
+    setIsRecording(false);
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+    }
+
+    sendAudio();
   };
 
   return (
@@ -127,17 +193,44 @@ export default function Chat() {
             },
           }}
         >
-          <Image preview={false} src='/voice.svg' alt='voice' width={28} height={28} />
-          <Form className='flex w-full gap-2 items-center' form={form} wrapperCol={{ span: 24 }}>
-            <div className='flex-1 items-center justify-center'>
-              <Form.Item rules={[{ max: 100, message: '消息内容不能超过100字' }]} name='content' style={{ margin: 0 }} className='flex-1'>
-                <Input.TextArea autoSize={{ minRows: 1, maxRows: 4 }} autoFocus size='large' placeholder='输入消息' />
-              </Form.Item>
-            </div>
-            <button onClick={onClickSend} className='flex-shrink-0 w-10 h-10 bg-theme-green rounded-full flex items-center justify-center'>
-              <SendOutlined style={{ color: '#fff' }} />
-            </button>
-          </Form>
+          <button onClick={() => {
+            if (inputMode === 'TEXT') {
+              setInputMode('AUDIO');
+            } 
+            else {
+              setInputMode('TEXT');
+            }
+          }} style={{ margin: 0, padding: 0, border: 'none', backgroundColor: 'transparent' }}>
+            {inputMode === 'TEXT' ? (
+              <Image preview={false} src='/voice.svg' alt='text' width={24} height={24} />
+            ) : (
+              <Image preview={false} src='/edit.svg' alt='audio' width={24} height={24} />
+            )}
+
+          </button> 
+          {
+            inputMode === 'TEXT'? (
+              <Form className='flex w-full gap-2 items-center' form={form} wrapperCol={{ span: 24 }}>
+                <div className='flex-1 items-center justify-center'>
+                  <Form.Item rules={[{ max: 100, message: '消息内容不能超过100字' }]} name='content' style={{ margin: 0 }} className='flex-1'>
+                    <Input.TextArea autoSize={{ minRows: 1, maxRows: 4 }} autoFocus size='large' placeholder='输入消息' />
+                  </Form.Item>
+                </div>
+                <button onClick={onClickSend} className='flex-shrink-0 w-10 h-10 bg-theme-green rounded-full flex items-center justify-center'>
+                  <SendOutlined style={{ color: '#fff' }} />
+                </button>
+              </Form>
+            ) : (
+              <div> 
+                <Button type="primary" onClick={handleRecordStart} disabled={isRecording}>
+                  开始录音
+                </Button>
+                <Button type="primary" onClick={handleRecordStop} disabled={!isRecording}>
+                  停止录音
+                </Button>
+              </div>
+            )
+          }
         </ConfigProvider>
       </div>
     </div>
