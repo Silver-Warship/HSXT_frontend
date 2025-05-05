@@ -18,7 +18,7 @@ const MyDivider = () => {
   );
 };
 
-export default function Home() {
+const Home = () => {
   const navigate = useNavigate();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [timer, setTimer] = useState(5);
@@ -103,4 +103,6 @@ export default function Home() {
       </Modal>
     </div>
   );
-}
+};
+
+export default Home;

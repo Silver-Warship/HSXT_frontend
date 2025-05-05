@@ -1,3 +1,4 @@
+import AddAdminModal from '@/components/AddAdminModal';
 import { ProForm, ProFormSelect } from '@ant-design/pro-components';
 import { Card, Space, Button, Table } from 'antd';
 import { useState } from 'react';
@@ -13,6 +14,7 @@ type SupervisorTableItem = {
 };
 
 const ManageSupervisor = () => {
+  const [showAddSupervisor, setShowAddSupervisor] = useState(false);
   const onFinish = (values: { supervisor: string }) => {
     console.log('查询表单提交的值：', values);
   };
@@ -96,7 +98,13 @@ const ManageSupervisor = () => {
               return (
                 <div className='flex justify-end'>
                   <Space size='middle'>
-                    <Button className='mr-6' type='primary'>
+                    <Button
+                      onClick={() => {
+                        setShowAddSupervisor(true);
+                      }}
+                      className='mr-6'
+                      type='primary'
+                    >
                       新增督导
                     </Button>
                     {doms}
@@ -133,6 +141,13 @@ const ManageSupervisor = () => {
         }}
         columns={columns}
         dataSource={dataSource}
+      />
+      <AddAdminModal
+        visible={showAddSupervisor}
+        onHide={() => {
+          setShowAddSupervisor(false);
+        }}
+        role='supervisor'
       />
     </>
   );

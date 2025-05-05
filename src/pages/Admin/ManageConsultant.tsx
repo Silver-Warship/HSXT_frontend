@@ -1,3 +1,4 @@
+import AddAdminModal from '@/components/AddAdminModal';
 import { ProForm, ProFormSelect } from '@ant-design/pro-components';
 import { Button, Card, Rate, Space, Table } from 'antd';
 import { useState } from 'react';
@@ -14,6 +15,7 @@ type ConsultantTableItem = {
 };
 
 const ManageConsultant = () => {
+  const [showAddConsultant, setShowAddConsultant] = useState(false);
   const onFinish = (values: { consultant: string }) => {
     console.log('查询表单提交的值：', values);
   };
@@ -100,7 +102,13 @@ const ManageConsultant = () => {
               return (
                 <div className='flex justify-end'>
                   <Space size='middle'>
-                    <Button className='mr-6' type='primary'>
+                    <Button
+                      onClick={() => {
+                        setShowAddConsultant(true);
+                      }}
+                      className='mr-6'
+                      type='primary'
+                    >
                       新增咨询师
                     </Button>
                     {doms}
@@ -137,6 +145,13 @@ const ManageConsultant = () => {
         }}
         columns={columns}
         dataSource={dataSource}
+      />
+      <AddAdminModal
+        visible={showAddConsultant}
+        onHide={() => {
+          setShowAddConsultant(false);
+        }}
+        role='consultant'
       />
     </>
   );

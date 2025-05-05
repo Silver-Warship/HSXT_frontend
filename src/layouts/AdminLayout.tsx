@@ -8,7 +8,7 @@ import {
   EditOutlined,
   PoweroffOutlined,
 } from '@ant-design/icons';
-import { Avatar, Dropdown, Input, Layout, Menu, Modal, Select, Form } from 'antd';
+import { Avatar, Dropdown, Input, Layout, Menu, Modal, Select, Form, Space } from 'antd';
 import { Header, Content } from 'antd/es/layout/layout';
 import Sider from 'antd/es/layout/Sider';
 import { useEffect, useMemo, useState } from 'react';
@@ -17,15 +17,23 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { RootState } from '../store/store';
 import { setUserInfo } from '../store/user/userSlice';
 import { getUserInfo } from '@/service/users';
+import { getRunningSession } from '@/service/session';
 
 const authTable: Record<string, (UserType | '')[]> = {
   dashboard: ['consultant', 'supervisor', 'admin'],
   record: ['consultant', 'supervisor', 'admin'],
+  'help-record': ['consultant', 'supervisor', 'admin'],
   sessions: ['consultant', 'supervisor'],
   'manage-supervisor': ['admin'],
   'manage-consultant': ['admin'],
   'manage-visitor': ['admin'],
   schedule: ['admin'],
+} as const;
+
+export const ROLE_MAP = {
+  admin: '管理员',
+  consultant: '咨询师',
+  supervisor: '督导',
 } as const;
 
 type MenuItem = {
@@ -48,10 +56,17 @@ const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { usertype } = useSelector((state: RootState) => state.user);
+  const { nickname, usertype, uid } = useSelector((state: RootState) => state.user);
 
   const location = useLocation();
   const currentKey = location.pathname.split('/').pop() ?? 'dashboard';
+
+  const [runningSession, setRunningSession] = useState<
+    {
+      label: string;
+      key: string;
+    }[]
+  >([]);
 
   useEffect(() => {
     getUserInfo(usertype === 'consultant' ? 'counsellor' : usertype)
@@ -61,6 +76,15 @@ const AdminLayout = () => {
       .catch((e) => {
         console.error('获取用户信息出错', e);
       });
+    getRunningSession({ userID: Number(uid) }).then((res) => {
+      console.log(res);
+      setRunningSession(
+        res.sessions.map(({ firstUserID, secondUserID, sessionID, other: { nickname } }) => ({
+          label: nickname,
+          key: `session/${firstUserID}-${secondUserID}-${sessionID}`,
+        })),
+      );
+    });
   }, []);
 
   const items = useMemo(
@@ -68,7 +92,15 @@ const AdminLayout = () => {
       [
         getItem('工作台', 'dashboard', <PieChartOutlined />), // 咨询师、督导、管理员
         getItem('咨询记录', 'record', <HistoryOutlined />), // 咨询师(自己的)、督导（自己的，以及自己管的咨询师的）、管理员（所有）
-        getItem('咨询会话', 'sessions', <UserOutlined />, [getItem('Tom', 'session/1'), getItem('Bill', 'session/4'), getItem('Alex', 'session/5')]), // 咨询师（与访客聊天）、督导（与咨询师聊天）
+        getItem('求助记录', 'help-record', <HistoryOutlined />),
+        getItem(
+          '咨询会话',
+          'sessions',
+          <UserOutlined />,
+          runningSession.map(({ label, key }) => {
+            return getItem(label, key);
+          }),
+        ), // 咨询师（与访客聊天）、督导（与咨询师聊天）
         getItem('督导管理', 'manage-supervisor', <TeamOutlined />), // 管理员
         getItem('咨询师管理', 'manage-consultant', <TeamOutlined />), // 管理员
         getItem('访客管理', 'manage-visitor', <UserSwitchOutlined />), // 管理员
@@ -109,7 +141,7 @@ const AdminLayout = () => {
           <h1 className='text-xl font-[500]'>Heart Journey</h1>
         </div>
         <div className='absolute right-4 top-0'>
-          <Select
+          {/* <Select
             defaultValue={usertype}
             onChange={(value) => {
               console.log(value);
@@ -134,7 +166,7 @@ const AdminLayout = () => {
                 label: '访客',
               },
             ]}
-          />
+          /> */}
           <Dropdown
             menu={{
               items: [
@@ -168,7 +200,12 @@ const AdminLayout = () => {
               },
             }}
           >
-            <Avatar size={36} src='/avatar.svg' />
+            <Space size='middle' className='cursor-pointer'>
+              <div className='text-white select-none'>
+                {usertype && ROLE_MAP[usertype as BUserType]} {nickname}
+              </div>
+              <Avatar size={36} src='/avatar.svg' />
+            </Space>
           </Dropdown>
         </div>
       </Header>

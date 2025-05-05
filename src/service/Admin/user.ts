@@ -31,7 +31,7 @@ export const consultantLogin = ({
   codeMsg: string;
   token: string;
 }> => {
-  return request.post('/api/counselor/login', {
+  return request.post('/api/counsellor/login', {
     email,
     password,
     verificationCode: verifyCode,
@@ -52,4 +52,22 @@ export const supervisorLogin = ({
     password,
     verificationCode: verifyCode,
   });
+};
+
+export type UserInfo = {
+  nickname: string;
+  email: string;
+  id: number;
+};
+
+export const getAllSupervisor = (): Promise<{
+  infos: UserInfo[];
+}> => {
+  return request.get(`/api/getAll?role=supervisor`);
+};
+
+export const getAllConsultant = (): Promise<{
+  infos: UserInfo[];
+}> => {
+  return request.get(`/api/getAll?role=counsellor`);
 };

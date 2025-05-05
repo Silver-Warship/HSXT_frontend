@@ -32,7 +32,7 @@ export const getUserInfo = (
   gender: 'male' | 'female' | 'unknown';
 }> => {
   if (!usertype) Promise.reject();
-  return request.get(`/api/tokenVerify?role=${usertype}`);
+  return request.get(`/api/tokenVerify?role=${usertype === 'visitor' ? 'user' : usertype}`);
 };
 
 export type EditUserInfoParams = { uid?: number; gender: GenderType; password?: string; nickname: string };

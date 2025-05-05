@@ -3,13 +3,17 @@ import { Flex, Modal, Spin } from 'antd';
 import HSTitle from '../components/HSTitle';
 import ConsultantCard from '../components/ConsultantCard';
 import { useEffect, useState } from 'react';
-import request from '../utils/request';
 import { useDispatch, useSelector } from 'react-redux';
 import { createSession } from '../store/chat/chatSlice';
 import { RootState } from '../store/store';
 import { useNavigate } from 'react-router-dom';
+import { getAllConsultant } from '@/service/Admin/user';
 
-export default function ChooseConsultant() {
+const ChooseConsultant = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { sessionID } = useSelector((state: RootState) => state.chat);
+  const { uid } = useSelector((state: RootState) => state.user);
   const [consultants, setConsultants] = useState<
     {
       name: string;
@@ -21,39 +25,28 @@ export default function ChooseConsultant() {
     }[]
   >();
 
-  useEffect(() => {
-    request
-      .get<
-        {
-          uid: string;
-          nickname: string;
-        }[]
-      >('/api/test/getAll')
-      .then((res) => {
-        setConsultants(
-          res.map(({ uid, nickname }) => ({
-            name: nickname,
-            avatar: '/avatar.png',
-            rate: 4.5,
-            intro: '精神科医生，擅长心理疾病的诊断和治疗。',
-            isIdle: true,
-            uid,
-          })),
-        );
-      })
-      .catch((e) => console.log(e));
-  }, []);
-
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { sessionID } = useSelector((state: RootState) => state.chat);
-  const { uid } = useSelector((state: RootState) => state.user);
-
   const [receiver, setReceiver] = useState('');
+
+  const fetchData = async () => {
+    const { infos } = await getAllConsultant();
+    setConsultants(
+      infos.map(({ nickname, id }) => ({
+        name: nickname,
+        avatar: '/avatar.png',
+        rate: 4.5,
+        intro: '精神科医生，擅长心理疾病的诊断和治疗。',
+        isIdle: true,
+        uid: String(id),
+      })),
+    );
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   useEffect(() => {
     if (sessionID && receiver && sessionID !== -1) {
-      console.log('sessionID', sessionID);
       // 替换当前页面
       navigate(`/chat/${uid}-${receiver}-${sessionID}`);
     }
@@ -101,4 +94,6 @@ export default function ChooseConsultant() {
       </Modal>
     </div>
   );
-}
+};
+
+export default ChooseConsultant;

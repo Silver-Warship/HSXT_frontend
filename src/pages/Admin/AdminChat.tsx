@@ -21,6 +21,7 @@ const AdminChat = () => {
       if (arr.length !== 3) {
         message.info('会话不存在！');
         navigate('/');
+        return;
       }
       dispatch(
         initSession({

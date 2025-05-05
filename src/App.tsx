@@ -15,6 +15,7 @@ import ManageSupervisor from './pages/Admin/ManageSupervisor';
 import ManageConsultant from './pages/Admin/ManageConsultant';
 import ManageVisitor from './pages/Admin/ManageVisitor';
 import Schedule from './pages/Admin/Schedule';
+import HelpRecord from './pages/Admin/HelpRecord';
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
           <Route element={<AdminLayout />}>
             <Route path='dashboard' element={AdminAuthed(<Dashboard />)} />
             <Route path='record' element={AdminAuthed(<ChatRecord />)} />
+            <Route path='help-record' element={AdminAuthed(<HelpRecord />)} />
             <Route path='session/:info' element={AdminAuthed(<Session />)} />
             <Route path='manage-supervisor' element={AdminAuthed(<ManageSupervisor />)} />
             <Route path='manage-consultant' element={AdminAuthed(<ManageConsultant />)} />

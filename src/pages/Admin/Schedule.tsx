@@ -1,19 +1,47 @@
-import { getAllDuty } from '@/service/Admin/schedule';
+import { ROLE_MAP } from '@/layouts/AdminLayout';
+import { addConsultantDuty, addSupervisorDuty, deleteConsultantDuty, deleteSupervisorDuty, getAllDuty, getDayDuty } from '@/service/Admin/schedule';
+import { getAllConsultant, getAllSupervisor, UserInfo } from '@/service/Admin/user';
 import { PlusOutlined } from '@ant-design/icons';
 import { ProFormSelect } from '@ant-design/pro-components';
-import { Avatar, Button, Calendar, Card, Col, Empty, Form, List, Modal, Row, Spin, Tabs } from 'antd';
+import { Avatar, Button, Calendar, Card, Col, Empty, Form, List, message, Modal, Row, Spin, Tabs } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import { useEffect, useState } from 'react';
 
-const UserList = ({ dataSource, isConsultant }: { dataSource: BriefInfo[]; isConsultant: boolean }) => {
+const UserList = ({
+  refresh,
+  dataSource,
+  isConsultant,
+  list,
+  today,
+}: {
+  refresh: () => void;
+  dataSource?: BriefInfo[];
+  isConsultant: boolean;
+  list: Option[];
+  today: Dayjs;
+}) => {
+  const [form] = Form.useForm();
+  const cnName = isConsultant ? '咨询师' : '督导';
+
   return (
     <div className='flex flex-col items-center'>
       {/* <Button className='mb-4' type='primary' icon={<PlusOutlined />}>
         添加{isConsultant ? '咨询师' : '督导'}
       </Button> */}
       <Form
-        onFinish={(values) => {
-          console.log(values);
+        form={form}
+        onFinish={async ({ select: { value } }) => {
+          try {
+            if (isConsultant) await addConsultantDuty(today, value);
+            else await addSupervisorDuty(today, value);
+            message.success('添加成功！');
+            refresh();
+          } catch (e) {
+            message.error('添加失败！');
+            console.log(e);
+          } finally {
+            form.resetFields();
+          }
         }}
         className='max-w-[300px] w-[50%] flex justify-between'
       >
@@ -22,31 +50,31 @@ const UserList = ({ dataSource, isConsultant }: { dataSource: BriefInfo[]; isCon
           name='select'
           label=''
           debounceTime={200}
-          request={async ({ keyWords = '' }) => {
-            return [
-              { label: '全部', value: 'all' },
-              { label: '未解决', value: 'open' },
-              { label: '未解决(已分配)', value: 'assignees' },
-              { label: '已解决', value: 'closed' },
-              { label: '解决中', value: 'processing' },
-            ].filter(({ value, label }) => {
-              return value.includes(keyWords) || label.includes(keyWords);
-            });
-          }}
-          placeholder={`添加${isConsultant ? '咨询师' : '督导'}`}
+          options={list}
+          // request={async ({ keyWords = '' }) => {
+          //   // 两组options会混掉，大概是缓存的问题
+          //   return list.filter(({ value, label }) => {
+          //     return String(value).includes(keyWords) || label.includes(keyWords);
+          //   });
+          // }}
+          placeholder={`添加${cnName}`}
+          mode='single'
+          rules={[{ required: true, message: `请选择${cnName}` }]}
         />
-        <Button type='primary' htmlType='submit' icon={<PlusOutlined />}>
+        <Button className='ml-2' type='primary' htmlType='submit' icon={<PlusOutlined />}>
           添加
         </Button>
       </Form>
       <div className='px-6 max-h-[650px] overflow-auto w-full flex justify-center'>
-        {dataSource.length === 0 ? (
+        {!dataSource ? (
+          <></>
+        ) : dataSource.length === 0 ? (
           <Empty />
         ) : (
           <List
             className='w-[80%] ml-auto mr-auto'
             dataSource={dataSource}
-            renderItem={({ nickname, discription }) => (
+            renderItem={({ nickname, email, arrangeID, role }) => (
               <List.Item
                 actions={[
                   <a
@@ -54,8 +82,16 @@ const UserList = ({ dataSource, isConsultant }: { dataSource: BriefInfo[]; isCon
                       Modal.confirm({
                         title: '确认移除',
                         content: `确定要移除${nickname}吗？`,
-                        onOk: () => {
-                          console.log('ok');
+                        onOk: async () => {
+                          try {
+                            if (role === 'supervisor') await deleteSupervisorDuty(arrangeID);
+                            if (role === 'counsellor') await deleteConsultantDuty(arrangeID);
+                            message.success('移除成功！');
+                            refresh();
+                          } catch (e) {
+                            message.error('移除失败！');
+                            console.log(e);
+                          }
                         },
                         onCancel: () => {
                           console.log('cancel');
@@ -73,8 +109,8 @@ const UserList = ({ dataSource, isConsultant }: { dataSource: BriefInfo[]; isCon
                   avatar={<Avatar src='/avatar.svg' />}
                   title={nickname}
                   description={
-                    <div title={discription} className='line-clamp-1'>
-                      {discription}
+                    <div title={email} className='line-clamp-1'>
+                      {email}
                     </div>
                   }
                 />
@@ -90,7 +126,16 @@ const UserList = ({ dataSource, isConsultant }: { dataSource: BriefInfo[]; isCon
 type BriefInfo = {
   id: number;
   nickname: string;
-  discription: string;
+  email: string;
+  gender: string;
+  avater: null | string;
+  arrangeID: number;
+  role: string;
+};
+
+type Option = {
+  value: number;
+  label: string;
 };
 
 const Schedule = () => {
@@ -102,122 +147,19 @@ const Schedule = () => {
     year: number;
     month: number;
   } | null>(null);
-
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [currentDuty, setCurrentDuty] = useState<{
     consultant: BriefInfo[];
     supervisor: BriefInfo[];
-  }>({
-    consultant: [
-      {
-        id: 1,
-        nickname: '张三',
-        discription: '高级心理咨询师高级心理咨询师高级心理咨询师高级心理咨询师高级心理咨询师高级心理咨询师高级心理咨询师',
-      },
-      {
-        id: 2,
-        nickname: '李四',
-        discription: '中级软件工程师',
-      },
-      {
-        id: 3,
-        nickname: '王五',
-        discription: '资深平面设计师',
-      },
-      {
-        id: 4,
-        nickname: '赵六',
-        discription: '注册会计师',
-      },
-      {
-        id: 5,
-        nickname: '孙七',
-        discription: '初级营养师',
-      },
-      {
-        id: 6,
-        nickname: '周八',
-        discription: '高级英语翻译',
-      },
-      {
-        id: 7,
-        nickname: '吴九',
-        discription: '中医理疗师',
-      },
-      {
-        id: 8,
-        nickname: '郑十',
-        discription: '健身教练',
-      },
-      {
-        id: 9,
-        nickname: '钱十一',
-        discription: '小学数学教师',
-      },
-      {
-        id: 10,
-        nickname: '孙十二',
-        discription: '室内装潢设计师',
-      },
-      {
-        id: 11,
-        nickname: '李十三',
-        discription: '数据分析师',
-      },
-      {
-        id: 12,
-        nickname: '周十四',
-        discription: '市场运营专员',
-      },
-      {
-        id: 13,
-        nickname: '吴十五',
-        discription: '人力资源主管',
-      },
-      {
-        id: 14,
-        nickname: '郑十六',
-        discription: '产品经理',
-      },
-      {
-        id: 15,
-        nickname: '王十七',
-        discription: '网页前端开发工程师',
-      },
-      {
-        id: 16,
-        nickname: '张十八',
-        discription: '电气工程师',
-      },
-      {
-        id: 17,
-        nickname: '陈十九',
-        discription: '园林设计师',
-      },
-      {
-        id: 18,
-        nickname: '杨二十',
-        discription: '咖啡师',
-      },
-      {
-        id: 19,
-        nickname: '黄二十一',
-        discription: '摄影师',
-      },
-      {
-        id: 20,
-        nickname: '许二十二',
-        discription: '美容师',
-      },
-    ],
-    supervisor: [],
-  });
+  } | null>(null);
+  const [allSupervisor, setAllSupervisor] = useState<Option[] | null>(null);
+  const [allConsultant, setAllConsultant] = useState<Option[] | null>(null);
 
-  const getDutyDays = async (year: number, month: number) => {
+  const getDutyDays = async (day: Dayjs) => {
     try {
-      const res = await getAllDuty(year, month);
+      const year = day.year();
+      const month = day.month() + 1;
+      const res = await getAllDuty(day);
       setDutyDays({
         data: res.orderList.map(({ supervisorNumber: supervisor, counsellorNumber: consultant }) => ({
           consultant,
@@ -231,8 +173,56 @@ const Schedule = () => {
     }
   };
 
+  const getDutyDetail = async (day: Dayjs) => {
+    setCurrentDuty(null);
+    const counsellor = await getDayDuty(day, 'counsellor');
+    const supervisor = await getDayDuty(day, 'supervisor');
+    setCurrentDuty({
+      consultant: counsellor.info,
+      supervisor: supervisor.info,
+    });
+  };
+
+  const fetchData = (day: Dayjs) => {
+    getDutyDays(day);
+    getDutyDetail(day);
+  };
+
   useEffect(() => {
-    getDutyDays(dayjs().year(), dayjs().month() + 1);
+    // 获取排班数据
+    fetchData(dayjs());
+
+    const mymap = (info: UserInfo[]) => {
+      return info.map(({ id, nickname }) => ({
+        value: id,
+        label: `${id} ${nickname}`,
+      }));
+    };
+    // 从缓存里拿所有的咨询师和督导列表
+    const allSupervisorTmp = localStorage.getItem('allSupervisor');
+    const allConsultantTmp = localStorage.getItem('allConsultant');
+    if (allSupervisorTmp) {
+      setAllSupervisor(JSON.parse(allSupervisorTmp));
+    }
+    if (allConsultantTmp) {
+      setAllConsultant(JSON.parse(allConsultantTmp));
+    }
+
+    // 发送请求更新状态和缓存
+    Promise.all([getAllSupervisor(), getAllConsultant()])
+      .then(([supRes, conRes]) => {
+        const supList = mymap(supRes.infos);
+        const conList = mymap(conRes.infos);
+
+        // setAllSupervisor(supList);
+        localStorage.setItem('allSupervisor', JSON.stringify(supList));
+
+        // setAllConsultant(conList);
+        localStorage.setItem('allConsultant', JSON.stringify(conList));
+      })
+      .catch((e) => {
+        console.log(e);
+      });
   }, []);
 
   return (
@@ -246,9 +236,15 @@ const Schedule = () => {
                 onChange={async (item) => {
                   if (!(item.year() === dutyDays?.year && item.month() + 1 === dutyDays.month)) {
                     setDutyDays(null);
-                    await getDutyDays(item.year(), item.month() + 1);
+                    await getDutyDays(item);
                   }
-                  setSelectedDate(item);
+                  setSelectedDate((prev) => {
+                    if (prev.isSame(item, 'date')) return prev;
+                    else {
+                      getDutyDetail(item);
+                      return item;
+                    }
+                  });
                 }}
                 cellRender={(current) => {
                   if (!dutyDays) {
@@ -278,7 +274,7 @@ const Schedule = () => {
             <div className='mb-4 text-center text-2xl font-medium text-black-second'>
               {selectedDate ? selectedDate.format('MM月DD日 dddd') : '请选择日期'}
             </div>
-            <Spin size='large' spinning={!dutyDays}>
+            <Spin size='large' spinning={!currentDuty || !allConsultant || !allConsultant}>
               <Tabs
                 defaultActiveKey='1'
                 centered
@@ -286,12 +282,32 @@ const Schedule = () => {
                   {
                     key: '1',
                     label: '咨询师',
-                    children: <UserList dataSource={currentDuty.consultant} isConsultant={true} />,
+                    children: (
+                      <UserList
+                        refresh={() => {
+                          fetchData(selectedDate);
+                        }}
+                        dataSource={currentDuty?.consultant}
+                        isConsultant={true}
+                        list={allConsultant ?? []}
+                        today={selectedDate}
+                      />
+                    ),
                   },
                   {
                     key: '2',
                     label: '督导',
-                    children: <UserList dataSource={currentDuty.supervisor} isConsultant={false} />,
+                    children: (
+                      <UserList
+                        refresh={() => {
+                          fetchData(selectedDate);
+                        }}
+                        dataSource={currentDuty?.supervisor}
+                        isConsultant={false}
+                        list={allSupervisor ?? []}
+                        today={selectedDate}
+                      />
+                    ),
                   },
                 ]}
               />
