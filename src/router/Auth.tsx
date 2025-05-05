@@ -14,7 +14,7 @@ import { RootState } from '../store/store';
 //   }
 // };
 
-const Authed = (children: React.ReactNode) => {
+const Authed = (children: React.ReactNode, isHome: boolean = false) => {
   const token = localStorage.getItem('token');
   const isLoggedIn = token && token !== 'null' && token !== 'undefined' && Boolean(token);
   const { usertype } = useSelector((state: RootState) => state.user);
@@ -22,13 +22,14 @@ const Authed = (children: React.ReactNode) => {
   // 如果需要登录但没有 token，重定向到登录页
   if (isLoggedIn) {
     if (usertype !== 'visitor') return <Navigate to='/admin' replace />;
-    return <>{children}</>;
+    if (!isHome) return <>{children}</>;
+    else return <Navigate to='/' replace />;
   } else {
     return <Navigate to='/login' replace />;
   }
 };
 
-const AdminAuthed = (children: React.ReactNode) => {
+const AdminAuthed = (children: React.ReactNode, isHome: boolean = false) => {
   const token = localStorage.getItem('token');
   const isLoggedIn = token && token !== 'null' && token !== 'undefined' && Boolean(token);
   const { usertype } = useSelector((state: RootState) => state.user);
@@ -36,7 +37,8 @@ const AdminAuthed = (children: React.ReactNode) => {
   // 如果需要登录但没有 token，重定向到登录页
   if (isLoggedIn) {
     if (usertype === 'visitor') return <Navigate to='/' replace />;
-    return <>{children}</>;
+    if (!isHome) return <>{children}</>;
+    else return <Navigate to='/admin' replace />;
   } else {
     return <Navigate to='/admin/login' replace />;
   }

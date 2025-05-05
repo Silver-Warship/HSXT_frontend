@@ -1,8 +1,10 @@
 import { ProForm, ProFormDateRangePicker, ProFormSelect } from '@ant-design/pro-components';
-import { Button, Card, Rate, Space, Table } from 'antd';
+import { Button, Card, Space, Table } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import { useState } from 'react';
 import ConsultRecordDetailModal from '../../components/ConsultRecordDetail';
+import { exportConsultantRecord, getHelpRecord } from '@/service/Admin/chatRecord';
+import downloadTXT from '@/utils/download';
 
 type RecordTableItem = {
   key: number;
@@ -10,6 +12,8 @@ type RecordTableItem = {
   supervisor: string;
   duration: string;
   date: Dayjs;
+  sessionID: number;
+  recordID: number;
 };
 
 type FormFieldsType = {
@@ -28,8 +32,12 @@ type FormFieldsType = {
   dateRange: [string, string];
 };
 
-const HelpRecordTable = ({ dataSource, pagination = true }: { dataSource: RecordTableItem[]; pagination?: boolean }) => {
+const HelpRecordTable = ({ dataSource, pagination = true }: { dataSource: RecordTableItem[] | null; pagination?: boolean }) => {
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [currentSession, setCurrentSession] = useState<{
+    sessionID: number;
+    recordID: number;
+  } | null>(null);
 
   const columns = [
     {
@@ -55,17 +63,32 @@ const HelpRecordTable = ({ dataSource, pagination = true }: { dataSource: Record
     {
       dataIndex: 'action',
       title: '操作',
-      render: () => (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      render: (_: any, { sessionID, recordID, consultant, supervisor, date }: RecordTableItem) => (
         <Space>
           <Button
             onClick={() => {
+              setCurrentSession({ sessionID, recordID });
               setShowDetailModal(true);
             }}
             type='primary'
           >
             查看详情
           </Button>
-          <Button type='primary'>导出记录</Button>
+          <Button
+            onClick={() => {
+              exportConsultantRecord(recordID)
+                .then((res) => {
+                  if (res.content) downloadTXT(res.content, `${consultant}-${supervisor}-${date.format('YYYY-MM-DD')}`);
+                })
+                .catch((e) => {
+                  console.log(e);
+                });
+            }}
+            type='primary'
+          >
+            导出记录
+          </Button>
         </Space>
       ),
     },
@@ -84,41 +107,50 @@ const HelpRecordTable = ({ dataSource, pagination = true }: { dataSource: Record
             : false
         }
         columns={columns}
-        dataSource={dataSource}
+        dataSource={dataSource ?? []}
+        loading={!dataSource}
       />
-      <ConsultRecordDetailModal visible={showDetailModal} onCancel={() => setShowDetailModal(false)} />
+      <ConsultRecordDetailModal isHelp={true} data={currentSession} visible={showDetailModal} onCancel={() => setShowDetailModal(false)} />
     </>
   );
 };
 
 const HelpRecord = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [dataSource, setDataSource] = useState<RecordTableItem[]>([
-    {
-      key: 1,
-      consultant: '1',
-      supervisor: '2',
-      duration: '00:12:54',
-      date: dayjs('2024-10-10 13:24:00', 'YYYY-MM-DD HH:mm:ss'),
-    },
-    {
-      key: 2,
-      consultant: '3',
-      supervisor: '4',
-      duration: '00:12:54',
-      date: dayjs('2025-10-10 13:24:00', 'YYYY-MM-DD HH:mm:ss'),
-    },
-    {
-      key: 3,
-      consultant: '5',
-      supervisor: '6',
-      duration: '00:12:54',
-      date: dayjs('2025-06-10 13:24:00', 'YYYY-MM-DD HH:mm:ss'),
-    },
-  ]);
+  const [dataSource, setDataSource] = useState<RecordTableItem[] | null>([]);
 
-  const onFinish = (values: FormFieldsType) => {
-    console.log('查询表单提交的值：', values);
+  const fetchData = async (counsellorID: number, supervisorID?: number, startTime?: Dayjs, endTime?: Dayjs) => {
+    setDataSource(null);
+    try {
+      const res = await getHelpRecord({
+        counsellorID: counsellorID,
+        supervisorID: supervisorID,
+        startTime: startTime,
+        endTime: endTime,
+      });
+      setDataSource(
+        res.helpRecords.map(({ counsellorName, supervisorName, helpSessionID, recordID }, index) => ({
+          key: index,
+          consultant: counsellorName,
+          supervisor: supervisorName,
+          duration: '',
+          date: dayjs(),
+          sessionID: helpSessionID,
+          recordID: recordID,
+        })),
+      );
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const onFinish = async ({ consultant, supervisor, dateRange }: FormFieldsType) => {
+    fetchData(
+      Number(consultant.value),
+      supervisor ? Number(supervisor.value) : undefined,
+      dateRange ? dayjs(dateRange[0]) : undefined,
+      dateRange ? dayjs(dateRange[1]) : undefined,
+    );
   };
 
   return (
@@ -131,12 +163,6 @@ const HelpRecord = () => {
           grid={true}
           rowProps={{
             gutter: [32, 16],
-          }}
-          initialValues={{
-            counselor: undefined,
-            consultationDuration: [undefined, undefined],
-            consultationDate: [undefined, undefined],
-            rating: [undefined, undefined],
           }}
           submitter={{
             render: (_, doms) => {
@@ -153,6 +179,7 @@ const HelpRecord = () => {
             label='咨询师'
             debounceTime={200}
             mode='single'
+            rules={[{ required: true }]}
             request={async ({ keyWords = '' }) => {
               return [
                 { label: '1号', value: '1' },

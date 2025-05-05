@@ -12,10 +12,14 @@ export const getRunningSession = ({
     firstUserID: number;
     secondUserID: number;
     other: {
-      avatar: string,
-      nickname: string
-    }
+      avatar: string;
+      nickname: string;
+    };
   }[];
 }> => {
   return request.post(`/api/getRunningSession?userID=${userID}`);
+};
+
+export const getSessionMessages = (sessionID: number): Promise<Session.GetSessionMessagesResponse> => {
+  return request.get(`/api/getSessionMessages?sessionID=${sessionID}`);
 };

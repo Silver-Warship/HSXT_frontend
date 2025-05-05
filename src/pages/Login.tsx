@@ -34,17 +34,17 @@ export default function LoginPage({ isAdmin = false }: { isAdmin?: boolean }) {
     email: string; // 验证码登录时的邮箱
     verifyCode: string; // 验证码
   }) => {
-    const { username, password, email, verifyCode, usertype = 'visitor' } = values;
+    const { password, email, verifyCode, usertype = 'visitor' } = values;
 
-    let params: LoginParams = { email: '' };
+    let params: LoginParams = { email };
     if (loginType === 'password') {
       params = {
-        email: username,
+        ...params,
         password,
       };
     } else if (loginType === 'verifyCode') {
       params = {
-        email,
+        ...params,
         verifyCode,
       };
     }
@@ -77,7 +77,8 @@ export default function LoginPage({ isAdmin = false }: { isAdmin?: boolean }) {
         // navigate('/home');
         setItemAsync('token', token).then(() => {
           message.success('登录成功！');
-          navigate('/');
+          if (isAdmin) navigate('/admin');
+          else navigate('/');
           dispatch(setUserInfo({ usertype }));
         });
       } else {
@@ -152,7 +153,7 @@ export default function LoginPage({ isAdmin = false }: { isAdmin?: boolean }) {
             />
           )}
           <ProFormText
-            name='username'
+            name='email'
             fieldProps={{
               size: 'large',
               prefix: <MailOutlined />,
@@ -193,6 +194,7 @@ export default function LoginPage({ isAdmin = false }: { isAdmin?: boolean }) {
           )}
           {loginType === 'verifyCode' && (
             <ProFormCaptcha
+              name='verifyCode'
               fieldProps={{
                 size: 'large',
                 prefix: <LockOutlined className={'prefixIcon'} />,
@@ -207,7 +209,6 @@ export default function LoginPage({ isAdmin = false }: { isAdmin?: boolean }) {
                 }
                 return '获取验证码';
               }}
-              name='verifyCode'
               rules={[
                 {
                   required: true,
@@ -216,9 +217,7 @@ export default function LoginPage({ isAdmin = false }: { isAdmin?: boolean }) {
               ]}
               onGetCaptcha={async () => {
                 const { email } = form.getFieldsValue();
-                console.log(email);
                 const res = await login({ email });
-                console.log(res);
                 const { code, codeMsg } = res;
                 if (code === 600) {
                   message.success('验证码发送成功！');

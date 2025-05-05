@@ -3,8 +3,9 @@ import { Flex, Form, Input, message, Image, Button } from 'antd';
 import { useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { initSession, sendMessage } from '../../store/chat/chatSlice';
+import { concatMessageList, initSession, sendMessage } from '../../store/chat/chatSlice';
 import { RootState } from '../../store/store';
+import { getSessionMessages } from '@/service/session';
 
 const AdminChat = () => {
   const [form] = Form.useForm();
@@ -13,9 +14,9 @@ const AdminChat = () => {
   const dispatch = useDispatch();
   const { info } = useParams();
   const { uid } = useSelector((state: RootState) => state.user);
+  const { isSessionClosed } = useSelector((state: RootState) => state.chat);
 
   useEffect(() => {
-    console.log('info', info);
     if (info) {
       const arr = info.split('-').map((item) => Number(item));
       if (arr.length !== 3) {
@@ -29,6 +30,20 @@ const AdminChat = () => {
           receiverID: arr[0] === Number(uid) ? arr[1] : arr[0],
         }),
       );
+      getSessionMessages(arr[2]).then((res) => {
+        dispatch(
+          concatMessageList(
+            res.messages.map((message) => {
+              const role = message.sendID === Number(uid) ? 1 : 0;
+              return {
+                ...message,
+                role,
+                status: 'success',
+              };
+            }),
+          ),
+        );
+      });
     }
   }, [info]);
 
@@ -45,6 +60,10 @@ const AdminChat = () => {
   }, [messageList]);
 
   const onClickSend = () => {
+    if (isSessionClosed) {
+      message.info('该会话已关闭！');
+      return;
+    }
     form.validateFields().then((values) => {
       const { content } = values;
       if (!content) {
@@ -76,7 +95,7 @@ const AdminChat = () => {
               <div key={id} className='w-full p-3 pr-[72px]'>
                 <Flex gap='small' align='flex-start'>
                   <Image preview={false} className='rounded-full flex-shrink-0' src='/avatar.svg' alt='avatar' width={44} height={44} />
-                  <div className='bg-white p-3 rounded-md break-words text-wrap max-w-[400px]'>
+                  <div className='bg-gray-100 p-3 rounded-md break-words text-wrap max-w-[400px]'>
                     <p className='leading-6'>{content}</p>
                   </div>
                 </Flex>

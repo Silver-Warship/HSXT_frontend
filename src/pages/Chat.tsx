@@ -4,7 +4,8 @@ import { useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store/store';
-import { initSession, sendMessage } from '../store/chat/chatSlice';
+import { concatMessageList, initSession, sendMessage } from '../store/chat/chatSlice';
+import { getSessionMessages } from '@/service/session';
 
 export default function Chat() {
   const [form] = Form.useForm();
@@ -13,6 +14,7 @@ export default function Chat() {
   const dispatch = useDispatch();
   const { info } = useParams();
   const { uid } = useSelector((state: RootState) => state.user);
+  const { isSessionClosed } = useSelector((state: RootState) => state.chat);
 
   useEffect(() => {
     if (info) {
@@ -20,6 +22,7 @@ export default function Chat() {
       if (arr.length !== 3) {
         message.info('会话不存在！');
         navigate('/');
+        return;
       }
       dispatch(
         initSession({
@@ -27,6 +30,20 @@ export default function Chat() {
           receiverID: arr[0] === Number(uid) ? arr[1] : arr[0],
         }),
       );
+      getSessionMessages(arr[2]).then((res) => {
+        dispatch(
+          concatMessageList(
+            res.messages.map((message) => {
+              const role = message.sendID === Number(uid) ? 1 : 0;
+              return {
+                ...message,
+                role,
+                status: 'success',
+              };
+            }),
+          ),
+        );
+      });
     }
   }, [info]);
 
@@ -47,6 +64,10 @@ export default function Chat() {
   }, [messageList]);
 
   const onClickSend = () => {
+    if (isSessionClosed) {
+      message.info('该会话已关闭！');
+      return;
+    }
     form.validateFields().then((values) => {
       const { content } = values;
       if (!content) {

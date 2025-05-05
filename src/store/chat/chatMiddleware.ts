@@ -275,7 +275,6 @@ const chatMiddleware: Middleware = (store) => {
 
   /** 注册连接 */
   const register = () => {
-    console.log('registerConnection');
     const seq = addSeq('registerConnection');
     _send({
       type: 'registerConnection',
@@ -301,7 +300,6 @@ const chatMiddleware: Middleware = (store) => {
 
   return (next) => (action) => {
     if (isChatRegisterAction(action) && socket === null) {
-      console.log('registering');
       connect(action.payload.url);
     } else if (isChatCreateSessionAction(action)) {
       createSession(action.payload.receiverID);

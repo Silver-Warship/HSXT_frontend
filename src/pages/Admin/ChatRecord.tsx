@@ -3,6 +3,8 @@ import { Button, Card, Rate, Space, Table } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import { useState } from 'react';
 import ConsultRecordDetailModal from '../../components/ConsultRecordDetail';
+import { exportConsultantRecord, getConsultRecord } from '@/service/Admin/chatRecord';
+import downloadTXT from '@/utils/download';
 
 type RecordTableItem = {
   key: number;
@@ -13,6 +15,8 @@ type RecordTableItem = {
   score: number;
   comment: string;
   help: string;
+  sessionID: number;
+  recordID: number;
 };
 
 type FormFieldsType = {
@@ -22,17 +26,21 @@ type FormFieldsType = {
     key: string;
     title: string;
   };
-  supervisor: {
+  visitor?: {
     label: string;
     value: string;
     key: string;
     title: string;
   };
-  dateRange: [string, string];
+  dateRange?: [string, string];
 };
 
-const ChatRecordTable = ({ dataSource, pagination = true }: { dataSource: RecordTableItem[]; pagination?: boolean }) => {
+const ChatRecordTable = ({ dataSource, pagination = true }: { dataSource: RecordTableItem[] | null; pagination?: boolean }) => {
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [currentSession, setCurrentSession] = useState<{
+    sessionID: number;
+    recordID: number;
+  } | null>(null);
 
   const columns = [
     {
@@ -76,17 +84,32 @@ const ChatRecordTable = ({ dataSource, pagination = true }: { dataSource: Record
     {
       dataIndex: 'action',
       title: '操作',
-      render: () => (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      render: (_: any, { sessionID, recordID, consultant, visitor, date }: RecordTableItem) => (
         <Space>
           <Button
             onClick={() => {
+              setCurrentSession({ sessionID, recordID });
               setShowDetailModal(true);
             }}
             type='primary'
           >
             查看详情
           </Button>
-          <Button type='primary'>导出记录</Button>
+          <Button
+            onClick={() => {
+              exportConsultantRecord(recordID)
+                .then((res) => {
+                  if (res.content) downloadTXT(res.content, `${consultant}-${visitor}-${date.format('YYYY-MM-DD')}`);
+                })
+                .catch((e) => {
+                  console.log(e);
+                });
+            }}
+            type='primary'
+          >
+            导出记录
+          </Button>
         </Space>
       ),
     },
@@ -101,54 +124,57 @@ const ChatRecordTable = ({ dataSource, pagination = true }: { dataSource: Record
             ? {
                 position: ['topRight', 'bottomRight'],
                 pageSize: 5,
+                showSizeChanger: false,
               }
             : false
         }
         columns={columns}
-        dataSource={dataSource}
+        loading={!dataSource}
+        dataSource={dataSource ?? []}
       />
-      <ConsultRecordDetailModal visible={showDetailModal} onCancel={() => setShowDetailModal(false)} />
+      <ConsultRecordDetailModal data={currentSession} visible={showDetailModal} onCancel={() => setShowDetailModal(false)} />
     </>
   );
 };
 
 const ChatRecord = () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [dataSource, setDataSource] = useState<RecordTableItem[]>([
-    {
-      key: 1,
-      consultant: '1',
-      visitor: '2',
-      duration: '00:12:54',
-      date: dayjs('2024-10-10 13:24:00', 'YYYY-MM-DD HH:mm:ss'),
-      score: 4,
-      comment: '很好，很专业很好，很专业很好，很专业很好，很专业很好，很专业很好，很专业很好，很专业',
-      help: '无',
-    },
-    {
-      key: 2,
-      consultant: '3',
-      visitor: '4',
-      duration: '00:12:54',
-      date: dayjs('2025-10-10 13:24:00', 'YYYY-MM-DD HH:mm:ss'),
-      score: 4,
-      comment: '很好，很专业很好，很专业很好，很专业很好，很专业很好，很专业很好，很专业很好，很专业',
-      help: '无',
-    },
-    {
-      key: 3,
-      consultant: '5',
-      visitor: '6',
-      duration: '00:12:54',
-      date: dayjs('2025-06-10 13:24:00', 'YYYY-MM-DD HH:mm:ss'),
-      score: 4,
-      comment: '很好，很专业很好，很专业很好，很专业很好，很专业很好，很专业很好，很专业很好，很专业',
-      help: '无',
-    },
-  ]);
+  const [dataSource, setDataSource] = useState<RecordTableItem[] | null>([]);
 
-  const onFinish = (values: FormFieldsType) => {
-    console.log('查询表单提交的值：', values);
+  const fetchData = async (counsellorID: number, userID?: number, startTime?: Dayjs, endTime?: Dayjs) => {
+    setDataSource(null);
+    try {
+      const res = await getConsultRecord({
+        counsellorID,
+        userID,
+        startTime,
+        endTime,
+      });
+      setDataSource(
+        res.helpRecords.map(({ consultantName, userName, duration, timestamp, userRating, appraisal }, index) => ({
+          key: index,
+          consultant: consultantName,
+          visitor: userName,
+          duration: String(duration),
+          date: dayjs(timestamp),
+          score: userRating,
+          comment: appraisal,
+          help: '',
+          sessionID: 0,
+          recordID: 0,
+        })),
+      );
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const onFinish = async ({ consultant, visitor, dateRange }: FormFieldsType) => {
+    fetchData(
+      Number(consultant.value),
+      visitor ? Number(visitor.value) : undefined,
+      dateRange ? dayjs(dateRange[0]) : undefined,
+      dateRange ? dayjs(dateRange[1]) : undefined,
+    );
   };
 
   return (
@@ -161,12 +187,6 @@ const ChatRecord = () => {
           grid={true}
           rowProps={{
             gutter: [32, 16],
-          }}
-          initialValues={{
-            counselor: undefined,
-            consultationDuration: [undefined, undefined],
-            consultationDate: [undefined, undefined],
-            rating: [undefined, undefined],
           }}
           submitter={{
             render: (_, doms) => {
@@ -196,8 +216,8 @@ const ChatRecord = () => {
             }}
           />
           <ProFormSelect.SearchSelect
-            name='supervisor'
-            label='督导'
+            name='visitor'
+            label='访客'
             debounceTime={200}
             mode='single'
             request={async ({ keyWords = '' }) => {

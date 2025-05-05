@@ -106,7 +106,7 @@ const AdminLayout = () => {
         getItem('访客管理', 'manage-visitor', <UserSwitchOutlined />), // 管理员
         getItem('排班表', 'schedule', <CalendarOutlined />), // 管理员
       ].filter(({ key }) => authTable[key].includes(usertype ?? '')),
-    [usertype],
+    [usertype, runningSession],
   );
 
   const [isModalVisible, setIsModalVisible] = useState(false);

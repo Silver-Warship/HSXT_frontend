@@ -40,6 +40,7 @@ const chatSlice = createSlice({
     }, // 走中间件
     initSession(state, action: PayloadAction<{ sessionID: number; receiverID: number }>) {
       const { sessionID, receiverID } = action.payload;
+      state.messageList = [];
       state.sessionID = sessionID;
       state.receiverID = receiverID;
       state.isSessionClosed = false;

@@ -51,12 +51,6 @@ const UserList = ({
           label=''
           debounceTime={200}
           options={list}
-          // request={async ({ keyWords = '' }) => {
-          //   // 两组options会混掉，大概是缓存的问题
-          //   return list.filter(({ value, label }) => {
-          //     return String(value).includes(keyWords) || label.includes(keyWords);
-          //   });
-          // }}
           placeholder={`添加${cnName}`}
           mode='single'
           rules={[{ required: true, message: `请选择${cnName}` }]}
