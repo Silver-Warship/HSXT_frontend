@@ -25,7 +25,7 @@ const chatMiddleware: Middleware = (store) => {
   let socket: WebSocket | null = null;
   let reconnectCount = 0;
   const reconnectInterval = 1000;
-  const reconnectAttempts = 10;
+  const reconnectAttempts = 10000000000;
   const requestPool: {
     seq: string;
     type: MessageTypes;
@@ -197,7 +197,21 @@ const chatMiddleware: Middleware = (store) => {
   const _send = (message: SendMessage.Message) => {
     if (socket && socket.readyState === WebSocket.OPEN) {
       console.log(`WebSocket sending message: ${JSON.stringify(message)}`);
-      socket.send(JSON.stringify(message));
+      // chunk
+      const chunkSize = 2048;
+      const content = JSON.stringify(message);
+      if (content.length <= chunkSize) {
+        socket.send(content);
+      } else {
+        // send content size first
+        socket.send(content.length.toString());
+        const chunks = Math.ceil(content.length / chunkSize);
+        for (let i = 0; i < chunks; i++) {
+          const start = i * chunkSize;
+          const end = Math.min(start + chunkSize, content.length);
+          socket.send(content.slice(start, end));
+        }
+      }
     } else {
       console.error('Cannot send message - WebSocket is not connected');
     }

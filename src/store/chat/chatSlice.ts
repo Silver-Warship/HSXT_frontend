@@ -51,6 +51,7 @@ const chatSlice = createSlice({
     },
     // 成功连接websocket
     _webSocketConnected(state) {
+      // 设置接收缓冲区和发送缓冲区大小
       state.isConnected = true;
       console.log('WebSocket is connected');
     },

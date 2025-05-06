@@ -89,21 +89,23 @@ export default function Chat() {
   };
 
   const sendAudio = () => {
+    if (recordedBlob === null) {
+      return;
+    }
     // convert blob to base64
     const reader = new FileReader();
-    reader.readAsDataURL(recordedBlob!);
+    reader.readAsDataURL(recordedBlob);
     reader.onloadend = () => {
       const base64data = reader.result as string;
-      const message = {
-        content: base64data,
-        contentType: 'AUDIO',
-      };
-      dispatch(sendMessage(message));
-      setRecordedBlob(null);
+      dispatch(sendMessage({ content: base64data, contentType: 'VOICE' }));
       setIsRecording(false);
       _scrollToBottom();
+      message.info('语音消息已发送！');
     }
+    setRecordedBlob(null);
   };
+
+  useEffect(sendAudio, [recordedBlob])
 
   const handleConfirm = () => {
     Modal.confirm({
@@ -130,13 +132,12 @@ export default function Chat() {
       .then(stream => {
           const mediaRecorder = new MediaRecorder(stream);
           mediaRecorderRef.current = mediaRecorder;
-
           mediaRecorder.start();
   
           mediaRecorder.ondataavailable = event => {
-          if (event.data.size > 0) {
-              chunksRef.current.push(event.data);
-          }
+            if (event.data.size > 0) {
+                chunksRef.current.push(event.data);
+            }
           };
   
           mediaRecorder.onstop = () => {
@@ -155,8 +156,6 @@ export default function Chat() {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
     }
-
-    sendAudio();
   };
 
   return (
