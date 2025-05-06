@@ -81,6 +81,8 @@ const chatMiddleware: Middleware = (store) => {
       console.log('收到消息', event.data);
       const message: ReceiveMessage.Response = JSON.parse(event.data);
       if (message.seq === 'type-newMessage') {
+        const sessionID = store.getState().chat.sessionID;
+        // if (message.data.sessionID !== sessionID) return;
         // 无seq，为服务器主动推送的新消息
         const {
           data: { content, contentType, messageID, timestamp },

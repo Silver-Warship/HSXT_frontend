@@ -27,7 +27,7 @@ function App() {
           {/* 首页 */}
           <Route path='/home' element={Authed(<Home />)} />
           {/* 登录页 */}
-          <Route path='/login' element={Authed(<Login />, true)} />
+          <Route path='/login' element={<Login />} />
           {/* 用户信息编辑页 */}
           <Route path='/user' element={Authed(<UserProfile />)} />
           {/* 咨询师选择页 */}
@@ -43,12 +43,11 @@ function App() {
           {/* 登录页 */}
           <Route
             path='login'
-            element={AdminAuthed(
+            element={
               <div className="h-[100vh] bg-[url('/admin_login_bg.png')] bg-[100%]">
                 <Login isAdmin={true} />
-              </div>,
-              true,
-            )}
+              </div>
+            }
           />
           {/* 首页 */}
           <Route element={<AdminLayout />}>

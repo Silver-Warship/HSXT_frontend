@@ -17,6 +17,10 @@ export default function RunningConsultant() {
       sessionID: number;
       firstUserID: number;
       secondUserID: number;
+      other: {
+        avatar: string;
+        nickname: string;
+      };
     }[]
   >();
 
@@ -43,7 +47,7 @@ export default function RunningConsultant() {
         ) : runningSession.length === 0 ? (
           <Empty description='暂无进行中的咨询' />
         ) : (
-          runningSession.map(({ sessionID, firstUserID, secondUserID }, index) => (
+          runningSession.map(({ sessionID, firstUserID, secondUserID, other: { nickname } }, index) => (
             <div key={index} className='rounded-xl px-3 py-4 bg-white'>
               <div className='mb-4 flex h-16 gap-4'>
                 <Image
@@ -58,7 +62,7 @@ export default function RunningConsultant() {
                   {/* 咨询师 */}
                   <div className='flex items-center gap-2'>
                     <Image preview={false} src='/consultant.svg' alt='consultant' width={24} height={24} />
-                    <p>咨询师{firstUserID === Number(uid) ? secondUserID : firstUserID}</p>
+                    <p>{nickname}</p>
                   </div>
                   {/* 咨询时间 */}
                   <div className='flex items-center gap-2'>
@@ -73,16 +77,9 @@ export default function RunningConsultant() {
               {/* 按钮组 */}
               <div className='flex justify-end gap-2'>
                 <Button
-                  onClick={() => {
-                    dispatch(shutDownSession({ sessionID }));
-                  }}
-                >
-                  结束咨询
-                </Button>
-                <Button
                   type='primary'
                   onClick={() => {
-                    navigate(`/chat/${uid}-${String(firstUserID) === uid ? secondUserID : firstUserID}-${sessionID}`);
+                    navigate(`/chat/${firstUserID}-${secondUserID}-${sessionID}`);
                   }}
                 >
                   继续咨询

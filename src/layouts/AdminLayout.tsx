@@ -186,8 +186,6 @@ const AdminLayout = () => {
                 if (key === '1') {
                   showModal();
                 } else if (key === '2') {
-                  // 退出登录逻辑
-                  localStorage.removeItem('token');
                   localStorage.clear();
                   navigate('/admin/login');
                 }

@@ -27,7 +27,8 @@ const Authed = (children: React.ReactNode, isLogin: boolean = false) => {
   // 如果需要登录但没有 token，重定向到登录页
   if (isLoggedIn) {
     if (usertype !== 'visitor') return <Navigate to='/admin' replace />;
-    return <>{children}</>;
+    if (!isLogin) return <>{children}</>;
+    else return <Navigate to='/' replace />;
   } else {
     return <Navigate to='/login' replace />;
   }
@@ -37,11 +38,6 @@ const AdminAuthed = (children: React.ReactNode, isLogin: boolean = false) => {
   const token = localStorage.getItem('token');
   const isLoggedIn = token && token !== 'null' && token !== 'undefined' && Boolean(token);
   const { usertype } = useSelector((state: RootState) => state.user);
-
-  if (isLogin) {
-    if (isLoggedIn) return <Navigate to='/admin' replace />;
-    else return <>{children}</>;
-  }
 
   // 如果需要登录但没有 token，重定向到登录页
   if (isLoggedIn) {

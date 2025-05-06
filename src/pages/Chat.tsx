@@ -106,7 +106,7 @@ export default function Chat() {
     setRecordedBlob(null);
   };
 
-  useEffect(sendAudio, [recordedBlob])
+  useEffect(sendAudio, [recordedBlob]);
 
   const handleConfirm = () => {
     Modal.confirm({
@@ -120,29 +120,30 @@ export default function Chat() {
   };
 
   const handleRecordStart = () => {
-      console.log("Recording started...");
-      setIsRecording(true);
-      chunksRef.current = [];
-      if (!navigator.mediaDevices) {
-          console.error("Your browser does not support media devices.");
-          return;
-      }
-      navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
-          const mediaRecorder = new MediaRecorder(stream);
-          mediaRecorderRef.current = mediaRecorder;
-          mediaRecorder.start();
-  
-          mediaRecorder.ondataavailable = event => {
-            if (event.data.size > 0) {
-                chunksRef.current.push(event.data);
-            }
-          };
-  
-          mediaRecorder.onstop = () => {
-              const blob = new Blob(chunksRef.current, { type: 'audio/wav' });
-              setRecordedBlob(blob);
-          };
+    console.log('Recording started...');
+    setIsRecording(true);
+    chunksRef.current = [];
+    if (!navigator.mediaDevices) {
+      console.error('Your browser does not support media devices.');
+      return;
+    }
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then((stream) => {
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        mediaRecorder.start();
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            chunksRef.current.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunksRef.current, { type: 'audio/wav' });
+          setRecordedBlob(blob);
+        };
       })
       .catch((err) => {
         console.error('Error accessing microphone: ', err);
@@ -158,7 +159,7 @@ export default function Chat() {
   };
 
   return (
-    <div>
+    <div className='h-full flex flex-col'>
       {/* 头部 */}
       <div className='bg-white w-full h-16 px-5 flex items-center justify-between'>
         <Space size={'middle'}>
@@ -173,7 +174,7 @@ export default function Chat() {
       {/* chat */}
       <MessageList messageList={messageList} scroll={scroll} onCloseSession={handleConfirm} />
       {/* input */}
-      <div className='absolute bottom-0 left-0 right-0 w-full bg-[#F9F9F9] border-t border-black-fifth flex items-center gap-2 px-3 py-2'>
+      <div className='w-full bg-[#F9F9F9] border-t border-black-fifth flex items-center gap-2 px-3 py-2'>
         <ConfigProvider
           theme={{
             token: {
