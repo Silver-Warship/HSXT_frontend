@@ -151,10 +151,13 @@ export default function Chat() {
   };
 
   const handleRecordStop = () => {
-    console.log('Recording stopped.');
     setIsRecording(false);
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
+    }
+
+    if (recordedBlob) {
+      sendAudio();
     }
   };
 

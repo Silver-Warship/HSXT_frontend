@@ -23,18 +23,19 @@ const RateModal = ({
   const navigate = useNavigate();
 
   const onFinish = async ({ score, comment }: { score: number; comment: string }) => {
-    await addConsultantRecord({
-      ...data,
-      userRating: score,
-      appraisal: comment,
-      counsellorAppraisal: '',
-    });
     dispatch(
       shutDownSession({
         sessionID: data.sessionID,
       }),
     );
     navigate('/');
+    
+    await addConsultantRecord({
+      ...data,
+      userRating: score,
+      appraisal: comment,
+      counsellorAppraisal: '',
+    });
   };
 
   return (

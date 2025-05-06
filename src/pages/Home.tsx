@@ -1,4 +1,4 @@
-import { Divider, Space, Image, Modal } from 'antd';
+import { Divider, Space, Image, Modal, Button } from 'antd';
 import HSTitle from '../components/HSTitle';
 import ConsultRecord from '../components/ConsultRecord';
 import { useNavigate } from 'react-router-dom';
@@ -53,7 +53,15 @@ const Home = () => {
   }, []);
 
   return (
-    <div>
+    <div className='relative'>
+      <div className='absolute top-5 right-5 z-50'> 
+        <PoweroffOutlined onClick={() => {
+          localStorage.clear();
+          navigate('/login');
+        }}  style={{fontSize: 22}} />
+      </div>
+      <div> 
+      </div> 
       {/* 标题 */}
       <HSTitle title='花狮心途' />
       {/* 用户信息 */}

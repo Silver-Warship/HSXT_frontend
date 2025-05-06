@@ -1,7 +1,8 @@
 import AddAdminModal from '@/components/AddAdminModal';
+import { deleteRole } from '@/service/Admin/roleManage';
 import { fuzzySearch } from '@/service/Admin/user';
 import { ProForm, ProFormDigit, ProFormSelect, ProFormText } from '@ant-design/pro-components';
-import { Card, Space, Button, Table } from 'antd';
+import { Card, Space, Button, Table, message } from 'antd';
 import { useState } from 'react';
 
 type SupervisorTableItem = {
@@ -14,6 +15,20 @@ type SupervisorTableItem = {
 
 const ManageSupervisor = () => {
   const [showAddSupervisor, setShowAddSupervisor] = useState(false);
+
+  const deleteSupervisor = async (id: number) => {
+    try {
+      const role = 'supervisor';
+      await deleteRole(id, role);
+      setDataSource(
+        dataSource?.filter((item) => item.id!== id)?? [],
+      );
+      message.success('删除成功');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      message.error('删除失败');
+    }
+  }
 
   const onFinish = async ({ supervisorName: name, supervisorID: id }: { supervisorName: string; supervisorID: number }) => {
     setDataSource(null);
@@ -66,12 +81,9 @@ const ManageSupervisor = () => {
     {
       dataIndex: 'action',
       title: '操作',
-      render: () => (
+      render: (_, record: SupervisorTableItem) => (
         <Space>
-          <Button onClick={() => {}} type='primary'>
-            修改信息
-          </Button>
-          <Button danger={true} type='primary'>
+          <Button onClick={() => {deleteSupervisor(record.id)}}  danger={true} type='primary'>
             删除
           </Button>
         </Space>
