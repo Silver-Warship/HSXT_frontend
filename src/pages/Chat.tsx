@@ -1,21 +1,24 @@
-import { LeftOutlined, SendOutlined } from '@ant-design/icons';
+import { AudioOutlined, EditOutlined, LeftOutlined, SendOutlined } from '@ant-design/icons';
 import { ConfigProvider, Flex, Form, Input, Space, Image, message, Modal } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store/store';
-import { concatMessageList, initSession, sendMessage } from '../store/chat/chatSlice';
+import { concatMessageList, initSession, sendMessage, shutDownSession } from '../store/chat/chatSlice';
 import { getSessionMessages } from '@/service/session';
-import { Button } from "antd";
+import { Button } from 'antd';
+import getAudio from '@/utils/getAudio';
+import RateModal from '@/components/RateModal';
+import MessageList from '@/components/MessageList';
 
 export default function Chat() {
   const [form] = Form.useForm();
-  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [scroll, setScroll] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { info } = useParams();
   const { uid } = useSelector((state: RootState) => state.user);
-  const { isSessionClosed } = useSelector((state: RootState) => state.chat);
+  const { isSessionClosed, sessionID, receiverID, userID } = useSelector((state: RootState) => state.chat);
   const [inputMode, setInputMode] = useState<string>('TEXT');
   const [blob, setBlob] = useState<Blob | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -23,6 +26,14 @@ export default function Chat() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+
+  const [showRateModal, setShowRateModal] = useState(false);
+
+  useEffect(() => {
+    if (isSessionClosed) {
+      navigate('/');
+    }
+  }, [isSessionClosed]);
 
   useEffect(() => {
     if (info) {
@@ -55,20 +66,10 @@ export default function Chat() {
     }
   }, [info]);
 
-  const _scrollToBottom = () => {
-    if (chatContainerRef.current) {
-      // chatContainerRef.current.scrollTo(
-      //   0,
-      //   chatContainerRef.current.scrollHeight
-      // );
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  };
-
   const { messageList } = useSelector((state: RootState) => state.chat);
 
   useEffect(() => {
-    _scrollToBottom();
+    setScroll((prev) => !prev);
   }, [messageList]);
 
   const onClickSend = () => {
@@ -84,7 +85,7 @@ export default function Chat() {
       }
       dispatch(sendMessage({ content, contentType: 'TEXT' }));
       form.resetFields();
-      _scrollToBottom();
+      setScroll((prev) => !prev);
     });
   };
 
@@ -99,9 +100,9 @@ export default function Chat() {
       const base64data = reader.result as string;
       dispatch(sendMessage({ content: base64data, contentType: 'VOICE' }));
       setIsRecording(false);
-      _scrollToBottom();
+      setScroll((prev) => !prev);
       message.info('语音消息已发送！');
-    }
+    };
     setRecordedBlob(null);
   };
 
@@ -112,11 +113,9 @@ export default function Chat() {
       title: '确认结束咨询吗？',
       content: '',
       onOk() {
-        console.log('用户选择了是，结束咨询');
+        setShowRateModal(true);
       },
-      onCancel() {
-        console.log('用户选择了否，不结束咨询');
-      },
+      onCancel() {},
     });
   };
 
@@ -145,13 +144,13 @@ export default function Chat() {
               setRecordedBlob(blob);
           };
       })
-      .catch(err => {
-          console.error("Error accessing microphone: ", err);
+      .catch((err) => {
+        console.error('Error accessing microphone: ', err);
       });
   };
-  
-  const handleRecordStop = () => {  
-    console.log("Recording stopped.");
+
+  const handleRecordStop = () => {
+    console.log('Recording stopped.');
     setIsRecording(false);
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
@@ -172,31 +171,7 @@ export default function Chat() {
         <Image onClick={handleConfirm} preview={false} src='/exit.svg' alt='exit' width={28} height={28} />
       </div>
       {/* chat */}
-      <div ref={chatContainerRef} style={{ height: 'calc(100vh - 128px)' }} className='w-full bg-theme-gray overflow-y-auto'>
-        <Flex vertical>
-          {messageList.map(({ messageID: id, role, content }, index) =>
-            role ? (
-              <div key={index} className='w-full p-3 pl-[72px]'>
-                <Flex gap='small' justify='flex-end' align='flex-start'>
-                  <div className='bg-chat-bg p-3 rounded-md break-words text-wrap max-w-[400px]'>
-                    <p className='leading-6'>{content}</p>
-                  </div>
-                  <Image preview={false} className='rounded-full flex-shrink-0' src='/avatar.svg' alt='avatar' width={44} height={44} />
-                </Flex>
-              </div>
-            ) : (
-              <div key={id} className='w-full p-3 pr-[72px]'>
-                <Flex gap='small' align='flex-start'>
-                  <Image preview={false} className='rounded-full flex-shrink-0' src='/avatar.svg' alt='avatar' width={44} height={44} />
-                  <div className='bg-white p-3 rounded-md break-words text-wrap max-w-[400px]'>
-                    <p className='leading-6'>{content}</p>
-                  </div>
-                </Flex>
-              </div>
-            ),
-          )}
-        </Flex>
-      </div>
+      <MessageList messageList={messageList} scroll={scroll} onCloseSession={handleConfirm} />
       {/* input */}
       <div className='absolute bottom-0 left-0 right-0 w-full bg-[#F9F9F9] border-t border-black-fifth flex items-center gap-2 px-3 py-2'>
         <ConfigProvider
@@ -213,46 +188,50 @@ export default function Chat() {
             },
           }}
         >
-          <button onClick={() => {
-            if (inputMode === 'TEXT') {
-              setInputMode('AUDIO');
-            } 
-            else {
-              setInputMode('TEXT');
-            }
-          }} style={{ margin: 0, padding: 0, border: 'none', backgroundColor: 'transparent' }}>
-            {inputMode === 'TEXT' ? (
-              <Image preview={false} src='/voice.svg' alt='text' width={24} height={24} />
-            ) : (
-              <Image preview={false} src='/edit.svg' alt='audio' width={24} height={24} />
-            )}
-
-          </button> 
-          {
-            inputMode === 'TEXT'? (
-              <Form className='flex w-full gap-2 items-center' form={form} wrapperCol={{ span: 24 }}>
-                <div className='flex-1 items-center justify-center'>
-                  <Form.Item rules={[{ max: 100, message: '消息内容不能超过100字' }]} name='content' style={{ margin: 0 }} className='flex-1'>
-                    <Input.TextArea autoSize={{ minRows: 1, maxRows: 4 }} autoFocus size='large' placeholder='输入消息' />
-                  </Form.Item>
-                </div>
-                <button onClick={onClickSend} className='flex-shrink-0 w-10 h-10 bg-theme-green rounded-full flex items-center justify-center'>
-                  <SendOutlined style={{ color: '#fff' }} />
-                </button>
-              </Form>
-            ) : (
-              <div> 
-                <Button type="primary" onClick={handleRecordStart} disabled={isRecording}>
-                  开始录音
-                </Button>
-                <Button type="primary" onClick={handleRecordStop} disabled={!isRecording}>
-                  停止录音
-                </Button>
+          <button
+            onClick={() => {
+              if (inputMode === 'TEXT') {
+                setInputMode('AUDIO');
+              } else {
+                setInputMode('TEXT');
+              }
+            }}
+            style={{ margin: 0, padding: 0, border: 'none', backgroundColor: 'transparent' }}
+          >
+            {inputMode === 'TEXT' ? <AudioOutlined style={{ fontSize: 22 }} /> : <EditOutlined style={{ fontSize: 22 }} />}
+          </button>
+          {inputMode === 'TEXT' ? (
+            <Form className='flex w-full gap-2 items-center' form={form} wrapperCol={{ span: 24 }}>
+              <div className='flex-1 items-center justify-center'>
+                <Form.Item rules={[{ max: 100, message: '消息内容不能超过100字' }]} name='content' style={{ margin: 0 }} className='flex-1'>
+                  <Input.TextArea autoSize={{ minRows: 1, maxRows: 4 }} autoFocus size='large' placeholder='输入消息' />
+                </Form.Item>
               </div>
-            )
-          }
+              <Button onClick={onClickSend} type='primary' shape='circle' icon={<SendOutlined style={{ color: '#fff' }} />} />
+            </Form>
+          ) : (
+            <div className='w-full flex flex-row justify-center gap-4'>
+              <Button type='primary' onClick={handleRecordStart} disabled={isRecording}>
+                开始录音
+              </Button>
+              <Button type='primary' onClick={handleRecordStop} disabled={!isRecording}>
+                停止录音
+              </Button>
+            </div>
+          )}
         </ConfigProvider>
       </div>
+      <RateModal
+        visible={showRateModal}
+        onCancel={() => {
+          setShowRateModal(false);
+        }}
+        data={{
+          counsellorID: receiverID,
+          userID: userID,
+          sessionID: sessionID,
+        }}
+      />
     </div>
   );
 }

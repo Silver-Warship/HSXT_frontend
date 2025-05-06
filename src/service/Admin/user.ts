@@ -1,4 +1,5 @@
 import request from '@/utils/request';
+import { EditUserInfoParams } from '../users';
 import dayjs from 'dayjs';
 
 export type AdminLoginParams = {
@@ -79,4 +80,26 @@ export const getAllConsultant = (): Promise<{
   infos: CounsullerInfo[];
 }> => {
   return request.get(`/api/getOnDutyCounsellor?timestamp=${dayjs().valueOf()}`);
+};
+
+export const editConsultantInfo = (data: EditUserInfoParams) => {
+  return request.post('/api/user/editprofile', data);
+};
+
+// TODO
+
+export const fuzzySearch = (
+  nickname: string,
+  role: 'supervisor' | 'counsellor' | 'user',
+  id?: number,
+): Promise<{
+  code: number;
+  codeMsg: string;
+  infos: {
+    nickname: string;
+    email: string;
+    id: number;
+  }[];
+}> => {
+  return request.get(`/api/fuzzySearch?nickname=${nickname}&role=${role}${id ? `&id=${id}` : ''}`);
 };

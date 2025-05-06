@@ -5,6 +5,7 @@ import { useState } from 'react';
 import ConsultRecordDetailModal from '../../components/ConsultRecordDetail';
 import { exportConsultantRecord, getHelpRecord } from '@/service/Admin/chatRecord';
 import downloadTXT from '@/utils/download';
+import { fuzzySearch } from '@/service/Admin/user';
 
 type RecordTableItem = {
   key: number;
@@ -37,6 +38,7 @@ const HelpRecordTable = ({ dataSource, pagination = true }: { dataSource: Record
   const [currentSession, setCurrentSession] = useState<{
     sessionID: number;
     recordID: number;
+    comment: string;
   } | null>(null);
 
   const columns = [
@@ -68,7 +70,7 @@ const HelpRecordTable = ({ dataSource, pagination = true }: { dataSource: Record
         <Space>
           <Button
             onClick={() => {
-              setCurrentSession({ sessionID, recordID });
+              setCurrentSession({ sessionID, recordID, comment: '' });
               setShowDetailModal(true);
             }}
             type='primary'
@@ -177,16 +179,15 @@ const HelpRecord = () => {
           <ProFormSelect.SearchSelect
             name='consultant'
             label='咨询师'
-            debounceTime={200}
+            debounceTime={500}
             mode='single'
             rules={[{ required: true }]}
             request={async ({ keyWords = '' }) => {
-              return [
-                { label: '1号', value: '1' },
-                { label: '2号', value: '2' },
-              ].filter(({ value, label }) => {
-                return value.includes(keyWords) || label.includes(keyWords);
-              });
+              const res = await fuzzySearch(keyWords, 'counsellor');
+              return res.infos.map(({ id, nickname }) => ({
+                label: `${id} ${nickname}`,
+                value: id,
+              }));
             }}
             colProps={{
               span: 4,
@@ -195,15 +196,14 @@ const HelpRecord = () => {
           <ProFormSelect.SearchSelect
             name='supervisor'
             label='督导'
-            debounceTime={200}
+            debounceTime={500}
             mode='single'
             request={async ({ keyWords = '' }) => {
-              return [
-                { label: '1号', value: '1' },
-                { label: '2号', value: '2' },
-              ].filter(({ value, label }) => {
-                return value.includes(keyWords) || label.includes(keyWords);
-              });
+              const res = await fuzzySearch(keyWords, 'supervisor');
+              return res.infos.map(({ id, nickname }) => ({
+                label: `${id} ${nickname}`,
+                value: id,
+              }));
             }}
             colProps={{
               span: 4,

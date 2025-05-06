@@ -20,7 +20,7 @@ export default function UserProfile() {
     };
     if (password) body['password'] = password;
     try {
-      await editUserInfo(body);
+      await editUserInfo(body, 'user');
       message.success('更新信息成功');
       navigate('/home');
     } catch (error) {

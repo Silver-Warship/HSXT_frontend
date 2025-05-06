@@ -35,8 +35,8 @@ export const getUserInfo = (
   return request.get(`/api/tokenVerify?role=${usertype === 'visitor' ? 'user' : usertype}`);
 };
 
-export type EditUserInfoParams = { uid?: number; gender: GenderType; password?: string; nickname: string };
+export type EditUserInfoParams = { uid?: number; gender: GenderType; password?: string; nickname: string; selfAppraisal?: string };
 
-export const editUserInfo = (data: EditUserInfoParams) => {
-  return request.post('/api/user/editprofile', data);
+export const editUserInfo = (data: EditUserInfoParams, role: 'user' | 'counsellor' | 'supervisor' | 'admin') => {
+  return request.post(`/api/editprofile?role=${role}`, data);
 };

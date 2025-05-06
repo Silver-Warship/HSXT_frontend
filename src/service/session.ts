@@ -23,3 +23,14 @@ export const getRunningSession = ({
 export const getSessionMessages = (sessionID: number): Promise<Session.GetSessionMessagesResponse> => {
   return request.get(`/api/getSessionMessages?sessionID=${sessionID}`);
 };
+
+export const addConsultantRecord = (data: {
+  counsellorID: number;
+  userID: number;
+  sessionID: number;
+  userRating: number;
+  appraisal: string;
+  counsellorAppraisal: string;
+}) => {
+  return request.post('/api/addConsultantRecord', data);
+};

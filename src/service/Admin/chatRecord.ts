@@ -15,15 +15,18 @@ export const getConsultRecord = ({
 }): Promise<{
   code: number;
   codeMsg: string;
-  helpRecords: {
-    userName: string;
+  consultantRecords: {
+    recordID: number;
     userID: number;
-    consultantName: string;
-    consultantID: number;
+    userName: string;
+    counsellorID: number;
+    counsellorName: string;
     timestamp: number;
+    sessionID: number;
     duration: number;
     userRating: number;
     appraisal: string;
+    counsellorAppraisal: string;
   }[];
 }> => {
   const startTimestamp = startTime?.valueOf();

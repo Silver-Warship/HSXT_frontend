@@ -5,44 +5,29 @@ import { Avatar, Card, List, Modal, Space } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 
-const ConsultRecordDetail = ({ isHelp, data }: { isHelp: boolean; data: Session.GetSessionMessagesContent[] | null }) => {
+const ConsultRecordDetail = ({ data }: { data: Session.GetSessionMessagesContent[] | null }) => {
   return (
-    <div className='flex flex-col max-h-[70vh]'>
-      <div className='text-[18px] font-semibold mb-6'>咨询记录</div>
-      {!isHelp && (
-        <div>
-          <div className='mb-2'>
-            <p className='text-base mb-1'>咨询师评价</p>
-            <p className='text-black-second'>11111111111111111111111111111111111111111111111</p>
-          </div>
-          <div className='mb-2'>
-            <p className='text-base mb-1'>用户评价</p>
-            <p className='text-black-second'>11111111111111111111111111111111111111111111111</p>
-          </div>
-        </div>
-      )}
-      <Card className='overflow-auto'>
-        <List
-          itemLayout='horizontal'
-          loading={!data}
-          dataSource={data ?? []}
-          renderItem={({ sendID, content, timestamp }) => (
-            <List.Item>
-              <List.Item.Meta
-                avatar={<Avatar src={''} />}
-                title={
-                  <Space>
-                    {sendID}
-                    <span style={{ color: 'gray', fontSize: '12px' }}>{dayjs(timestamp).format('YYYY-MM-DD HH:mm:ss')}</span>
-                  </Space>
-                }
-                description={content}
-              />
-            </List.Item>
-          )}
-        />
-      </Card>
-    </div>
+    <Card className='overflow-auto'>
+      <List
+        itemLayout='horizontal'
+        loading={!data}
+        dataSource={data ?? []}
+        renderItem={({ sendID, content, timestamp }) => (
+          <List.Item>
+            <List.Item.Meta
+              avatar={<Avatar src={''} />}
+              title={
+                <Space>
+                  {sendID}
+                  <span style={{ color: 'gray', fontSize: '12px' }}>{dayjs(timestamp).format('YYYY-MM-DD HH:mm:ss')}</span>
+                </Space>
+              }
+              description={content}
+            />
+          </List.Item>
+        )}
+      />
+    </Card>
   );
 };
 
@@ -56,6 +41,7 @@ const ConsultRecordDetailModal = ({
   data: {
     sessionID: number;
     recordID: number;
+    comment: string;
   } | null;
   visible: boolean;
   onCancel: () => void;
@@ -91,7 +77,16 @@ const ConsultRecordDetailModal = ({
       open={visible}
       onCancel={onCancel}
     >
-      <ConsultRecordDetail isHelp={isHelp} data={record} />
+      <div className='flex flex-col max-h-[70vh]'>
+        <div className='text-[18px] font-semibold mb-6'>咨询记录</div>
+        {!isHelp && (
+          <div className='mb-2'>
+            <p className='text-base mb-1'>用户评价</p>
+            <p className='text-black-second'>{data?.comment}</p>
+          </div>
+        )}
+        <ConsultRecordDetail data={record} />
+      </div>
     </Modal>
   );
 };

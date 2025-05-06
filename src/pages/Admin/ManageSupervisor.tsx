@@ -1,38 +1,41 @@
 import AddAdminModal from '@/components/AddAdminModal';
-import { ProForm, ProFormSelect } from '@ant-design/pro-components';
+import { fuzzySearch } from '@/service/Admin/user';
+import { ProForm, ProFormDigit, ProFormSelect, ProFormText } from '@ant-design/pro-components';
 import { Card, Space, Button, Table } from 'antd';
 import { useState } from 'react';
 
 type SupervisorTableItem = {
   key: number;
-  consultants: string[];
+  id: number;
   gender: string;
   supervisor: string;
-  helpNum: number;
-  phone: string;
   email: string;
 };
 
 const ManageSupervisor = () => {
   const [showAddSupervisor, setShowAddSupervisor] = useState(false);
-  const onFinish = (values: { supervisor: string }) => {
-    console.log('查询表单提交的值：', values);
+
+  const onFinish = async ({ supervisorName: name, supervisorID: id }: { supervisorName: string; supervisorID: number }) => {
+    setDataSource(null);
+    const res = await fuzzySearch(name, 'supervisor', id);
+    setDataSource(
+      res.infos.map(({ id, nickname, email }) => ({
+        key: id,
+        id: id,
+        supervisor: nickname,
+        email: email,
+        gender: 'male',
+      })),
+    );
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [dataSource, setDataSource] = useState<SupervisorTableItem[]>([
-    {
-      key: 1,
-      consultants: ['111', '222'],
-      gender: '男',
-      supervisor: '我是你爹',
-      helpNum: 10,
-      phone: '12345678901',
-      email: '123@qq.com',
-    },
-  ]);
+  const [dataSource, setDataSource] = useState<SupervisorTableItem[] | null>([]);
 
   const columns = [
+    {
+      dataIndex: 'id',
+      title: 'ID',
+    },
     {
       dataIndex: 'supervisor',
       title: '督导',
@@ -41,21 +44,21 @@ const ManageSupervisor = () => {
       dataIndex: 'gender',
       title: '性别',
     },
-    {
-      dataIndex: 'consultants',
-      title: '绑定咨询师',
-      render: (text: string[]) => {
-        return text.join(', ');
-      },
-    },
-    {
-      dataIndex: 'helpNum',
-      title: '求助数',
-    },
-    {
-      dataIndex: 'phone',
-      title: '电话',
-    },
+    // {
+    //   dataIndex: 'consultants',
+    //   title: '绑定咨询师',
+    //   render: (text: string[]) => {
+    //     return text.join(', ');
+    //   },
+    // },
+    // {
+    //   dataIndex: 'helpNum',
+    //   title: '求助数',
+    // },
+    // {
+    //   dataIndex: 'phone',
+    //   title: '电话',
+    // },
     {
       dataIndex: 'email',
       title: '邮箱',
@@ -87,12 +90,6 @@ const ManageSupervisor = () => {
           rowProps={{
             gutter: [32, 16],
           }}
-          initialValues={{
-            counselor: undefined,
-            consultationDuration: [undefined, undefined],
-            consultationDate: [undefined, undefined],
-            rating: [undefined, undefined],
-          }}
           submitter={{
             render: (_, doms) => {
               return (
@@ -114,19 +111,16 @@ const ManageSupervisor = () => {
             },
           }}
         >
-          <ProFormSelect.SearchSelect
-            name='supervisor'
-            label='督导'
-            debounceTime={200}
-            mode='single'
-            request={async ({ keyWords = '' }) => {
-              return [
-                { label: '1号', value: '1' },
-                { label: '2号', value: '2' },
-              ].filter(({ value, label }) => {
-                return value.includes(keyWords) || label.includes(keyWords);
-              });
+          <ProFormText
+            name='supervisorName'
+            label='督导昵称'
+            colProps={{
+              span: 4,
             }}
+          />
+          <ProFormDigit
+            name='supervisorID'
+            label='督导ID'
             colProps={{
               span: 4,
             }}
@@ -140,7 +134,8 @@ const ManageSupervisor = () => {
           pageSize: 5,
         }}
         columns={columns}
-        dataSource={dataSource}
+        dataSource={dataSource ?? []}
+        loading={!dataSource}
       />
       <AddAdminModal
         visible={showAddSupervisor}

@@ -109,6 +109,7 @@ const chatMiddleware: Middleware = (store) => {
         ackMsg([messageID]);
         return;
       } else if (message.seq === 'type-sessionClose') {
+        console.log(message);
         store.dispatch(sessionClosed());
       } else {
         removeSeq(message);

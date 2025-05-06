@@ -1,40 +1,41 @@
 import AddAdminModal from '@/components/AddAdminModal';
-import { ProForm, ProFormSelect } from '@ant-design/pro-components';
+import { fuzzySearch } from '@/service/Admin/user';
+import { ProForm, ProFormDigit, ProFormSelect, ProFormText } from '@ant-design/pro-components';
 import { Button, Card, Rate, Space, Table } from 'antd';
 import { useState } from 'react';
 
 type ConsultantTableItem = {
   key: number;
-  consultant: string;
+  id: number;
   gender: string;
-  supervisor: string;
-  counselNum: number;
-  score: number;
-  phone: string;
+  consultant: string;
   email: string;
 };
 
 const ManageConsultant = () => {
   const [showAddConsultant, setShowAddConsultant] = useState(false);
-  const onFinish = (values: { consultant: string }) => {
-    console.log('查询表单提交的值：', values);
+
+  const onFinish = async ({ name, id }: { name: string; id: number }) => {
+    setDataSource(null);
+    const res = await fuzzySearch(name, 'counsellor', id);
+    setDataSource(
+      res.infos.map(({ id, nickname, email }) => ({
+        key: id,
+        id: id,
+        consultant: nickname,
+        email: email,
+        gender: 'male',
+      })),
+    );
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [dataSource, setDataSource] = useState<ConsultantTableItem[]>([
-    {
-      key: 1,
-      consultant: '111',
-      gender: '男',
-      supervisor: '我是你爹',
-      counselNum: 10,
-      score: 4.5,
-      phone: '12345678901',
-      email: '123@qq.com',
-    },
-  ]);
+  const [dataSource, setDataSource] = useState<ConsultantTableItem[] | null>([]);
 
   const columns = [
+    {
+      dataIndex: 'id',
+      title: 'ID',
+    },
     {
       dataIndex: 'consultant',
       title: '咨询师',
@@ -43,23 +44,23 @@ const ManageConsultant = () => {
       dataIndex: 'gender',
       title: '性别',
     },
-    {
-      dataIndex: 'supervisor',
-      title: '绑定督导',
-    },
-    {
-      dataIndex: 'counselNum',
-      title: '总咨询数',
-    },
-    {
-      dataIndex: 'score',
-      title: '综合评分',
-      render: (score: number) => <Rate disabled allowHalf defaultValue={0} value={score} />,
-    },
-    {
-      dataIndex: 'phone',
-      title: '电话',
-    },
+    // {
+    //   dataIndex: 'supervisor',
+    //   title: '绑定督导',
+    // },
+    // {
+    //   dataIndex: 'counselNum',
+    //   title: '总咨询数',
+    // },
+    // {
+    //   dataIndex: 'score',
+    //   title: '综合评分',
+    //   render: (score: number) => <Rate disabled allowHalf defaultValue={0} value={score} />,
+    // },
+    // {
+    //   dataIndex: 'phone',
+    //   title: '电话',
+    // },
     {
       dataIndex: 'email',
       title: '邮箱',
@@ -91,12 +92,6 @@ const ManageConsultant = () => {
           rowProps={{
             gutter: [32, 16],
           }}
-          initialValues={{
-            counselor: undefined,
-            consultationDuration: [undefined, undefined],
-            consultationDate: [undefined, undefined],
-            rating: [undefined, undefined],
-          }}
           submitter={{
             render: (_, doms) => {
               return (
@@ -118,19 +113,16 @@ const ManageConsultant = () => {
             },
           }}
         >
-          <ProFormSelect.SearchSelect
-            name='consultant'
-            label='咨询师'
-            debounceTime={200}
-            mode='single'
-            request={async ({ keyWords = '' }) => {
-              return [
-                { label: '1号', value: '1' },
-                { label: '2号', value: '2' },
-              ].filter(({ value, label }) => {
-                return value.includes(keyWords) || label.includes(keyWords);
-              });
+          <ProFormText
+            name='name'
+            label='咨询师昵称'
+            colProps={{
+              span: 4,
             }}
+          />
+          <ProFormDigit
+            name='id'
+            label='咨询师ID'
             colProps={{
               span: 4,
             }}
@@ -144,7 +136,8 @@ const ManageConsultant = () => {
           pageSize: 5,
         }}
         columns={columns}
-        dataSource={dataSource}
+        dataSource={dataSource ?? []}
+        loading={!dataSource}
       />
       <AddAdminModal
         visible={showAddConsultant}
