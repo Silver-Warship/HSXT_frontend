@@ -1,4 +1,5 @@
 import request from '@/utils/request';
+import dayjs from 'dayjs';
 
 export type AdminLoginParams = {
   email: string;
@@ -60,6 +61,14 @@ export type UserInfo = {
   id: number;
 };
 
+export type CounsullerInfo = {
+  nickname: string;
+  email: string;
+  counsellorID: number;
+  gender: string;
+  selfAppraisal: string;
+};
+
 export const getAllSupervisor = (): Promise<{
   infos: UserInfo[];
 }> => {
@@ -67,7 +76,7 @@ export const getAllSupervisor = (): Promise<{
 };
 
 export const getAllConsultant = (): Promise<{
-  infos: UserInfo[];
+  infos: CounsullerInfo[];
 }> => {
-  return request.get(`/api/getAll?role=counsellor`);
+  return request.get(`/api/getOnDutyCounsellor?timestamp=${dayjs().valueOf()}`);
 };

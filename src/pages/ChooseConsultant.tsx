@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createSession } from '../store/chat/chatSlice';
 import { RootState } from '../store/store';
 import { useNavigate } from 'react-router-dom';
-import { getAllConsultant } from '@/service/Admin/user';
+import { CounsullerInfo, getAllConsultant } from '@/service/Admin/user';
 
 const ChooseConsultant = () => {
   const dispatch = useDispatch();
@@ -28,15 +28,15 @@ const ChooseConsultant = () => {
   const [receiver, setReceiver] = useState('');
 
   const fetchData = async () => {
-    const { infos } = await getAllConsultant();
+    const infos = await getAllConsultant();
     setConsultants(
-      infos.map(({ nickname, id }) => ({
-        name: nickname,
-        avatar: '/avatar.png',
-        rate: 4.5,
-        intro: '精神科医生，擅长心理疾病的诊断和治疗。',
+      infos.counsellors.map(( info :  CounsullerInfo ) => ({
+        name: info.nickname,
+        avatar: "/avatar.svg",
+        rate: Math.random() * 5,
+        intro: info.selfAppraisal,
         isIdle: true,
-        uid: String(id),
+        uid: String(info.counsellorID),
       })),
     );
   };
