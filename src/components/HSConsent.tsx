@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 export default function HSConsent() {
   return (
     <div className='text-start leading-6'>
@@ -49,7 +51,7 @@ export default function HSConsent() {
         若你已阅读并理解本知情同意书的全部内容，认同其中的条款，表明你同意接受花狮心途心理咨询服务平台提供的服务。如有任何疑问，请随时联系我们的客服人员。
       </p>
       <p className='text-end'>花狮心途心理咨询服务平台</p>
-      <p className='text-end'>[具体日期]</p>
+      <p className='text-end'>[{dayjs().format('YYYY-MM-DD HH:mm')}]</p>
     </div>
   );
 }

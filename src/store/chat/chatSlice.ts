@@ -77,6 +77,12 @@ const chatSlice = createSlice({
         contentType: ContentTypes;
       }>,
     ) {}, // 走中间件
+    sendMessageToGPT(
+      state,
+      action: PayloadAction<{
+        content: string;
+      }>,
+    ) {}, // 走中间件
     // 将用户发送的消息状态更新为success
     _updateMessageStatus(state, action: PayloadAction<{ seq: string; messageID: number }>) {
       state.messageList = state.messageList.map((item) =>
@@ -105,6 +111,7 @@ export const {
   _webSocketError,
   initSession,
   sendMessage,
+  sendMessageToGPT,
   concatMessageList,
   _updateMessageStatus,
   setInfo,

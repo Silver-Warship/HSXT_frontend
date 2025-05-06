@@ -60,6 +60,14 @@ const ChooseConsultant = () => {
       <div className='w-full px-5'>
         {/* 卡片列表 */}
         <Flex vertical gap={8}>
+          {/* 空白卡片 */}
+          <ConsultantCard
+                {...{ name: 'Kimi', uid: '-1', isIdle: true, rate: 5, onStart: () => {} }}
+                onStart={() => {
+                  navigate('/GptChat');
+                }}
+          />
+
           {!consultants ? (
             <Spin size='large' />
           ) : (
