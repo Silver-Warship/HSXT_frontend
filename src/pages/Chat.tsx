@@ -90,23 +90,24 @@ export default function Chat() {
   };
 
   const sendAudio = () => {
+    if (recordedBlob === null) {
+      return;
+    }
     // convert blob to base64
     const reader = new FileReader();
-    reader.readAsDataURL(recordedBlob!);
+    reader.readAsDataURL(recordedBlob);
     reader.onloadend = () => {
       const base64data = reader.result as string;
-      const message = {
-        content: base64data,
-        contentType: 'VOICE' as ContentTypes,
-      };
-      dispatch(sendMessage(message));
-      setRecordedBlob(null);
+      dispatch(sendMessage({ content: base64data, contentType: 'VOICE' }));
       setIsRecording(false);
       setScroll((prev) => !prev);
+      message.info('语音消息已发送！');
     };
+    setRecordedBlob(null);
   };
 
-  // 确认是否主动结束咨询
+  useEffect(sendAudio, [recordedBlob])
+
   const handleConfirm = () => {
     Modal.confirm({
       title: '确认结束咨询吗？',
@@ -119,31 +120,29 @@ export default function Chat() {
   };
 
   const handleRecordStart = () => {
-    console.log('Recording started...');
-    setIsRecording(true);
-    chunksRef.current = [];
-    if (!navigator.mediaDevices) {
-      console.error('Your browser does not support media devices.');
-      return;
-    }
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then((stream) => {
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorderRef.current = mediaRecorder;
-
-        mediaRecorder.start();
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            chunksRef.current.push(event.data);
-          }
-        };
-
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(chunksRef.current, { type: 'audio/wav' });
-          setRecordedBlob(blob);
-        };
+      console.log("Recording started...");
+      setIsRecording(true);
+      chunksRef.current = [];
+      if (!navigator.mediaDevices) {
+          console.error("Your browser does not support media devices.");
+          return;
+      }
+      navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+          const mediaRecorder = new MediaRecorder(stream);
+          mediaRecorderRef.current = mediaRecorder;
+          mediaRecorder.start();
+  
+          mediaRecorder.ondataavailable = event => {
+            if (event.data.size > 0) {
+                chunksRef.current.push(event.data);
+            }
+          };
+  
+          mediaRecorder.onstop = () => {
+              const blob = new Blob(chunksRef.current, { type: 'audio/wav' });
+              setRecordedBlob(blob);
+          };
       })
       .catch((err) => {
         console.error('Error accessing microphone: ', err);
@@ -156,8 +155,6 @@ export default function Chat() {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
     }
-
-    sendAudio();
   };
 
   return (
