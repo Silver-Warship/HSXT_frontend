@@ -109,6 +109,7 @@ const chatMiddleware: Middleware = (store) => {
         ackMsg([messageID]);
         return;
       } else if (message.seq === 'type-sessionClose') {
+        console.log(message);
         store.dispatch(sessionClosed());
       } else {
         removeSeq(message);
@@ -196,7 +197,7 @@ const chatMiddleware: Middleware = (store) => {
   // 通用发送消息函数
   const _send = (message: SendMessage.Message) => {
     if (socket && socket.readyState === WebSocket.OPEN) {
-      console.log(`WebSocket sending message: ${JSON.stringify(message)}`);
+      // console.log(`WebSocket sending message: ${JSON.stringify(message)}`);
       socket.send(JSON.stringify(message));
     } else {
       console.error('Cannot send message - WebSocket is not connected');

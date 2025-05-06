@@ -8,7 +8,7 @@ import {
   EditOutlined,
   PoweroffOutlined,
 } from '@ant-design/icons';
-import { Avatar, Dropdown, Input, Layout, Menu, Modal, Select, Form, Space } from 'antd';
+import { Avatar, Dropdown, Input, Layout, Menu, Modal, Select, Form, Space, message } from 'antd';
 import { Header, Content } from 'antd/es/layout/layout';
 import Sider from 'antd/es/layout/Sider';
 import { useEffect, useMemo, useState } from 'react';
@@ -16,8 +16,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { RootState } from '../store/store';
 import { setUserInfo } from '../store/user/userSlice';
-import { getUserInfo } from '@/service/users';
+import { editUserInfo, EditUserInfoParams, getUserInfo } from '@/service/users';
 import { getRunningSession } from '@/service/session';
+import { ProFormRadio, ProFormText } from '@ant-design/pro-components';
 
 const authTable: Record<string, (UserType | '')[]> = {
   dashboard: ['consultant', 'supervisor', 'admin'],
@@ -56,7 +57,7 @@ const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { nickname, usertype, uid } = useSelector((state: RootState) => state.user);
+  const { nickname, usertype, uid, email, gender } = useSelector((state: RootState) => state.user);
 
   const location = useLocation();
   const currentKey = location.pathname.split('/').pop() ?? 'dashboard';
@@ -120,9 +121,7 @@ const AdminLayout = () => {
     form
       .validateFields()
       .then((values) => {
-        // 这里可以处理表单提交逻辑，例如发送请求到后端更新数据
-        console.log('Received values of form: ', values);
-        setIsModalVisible(false);
+        onFinish(values);
       })
       .catch((info) => {
         console.log('Validate Failed:', info);
@@ -133,6 +132,26 @@ const AdminLayout = () => {
     setIsModalVisible(false);
   };
 
+  const onFinish = async ({ gender, password, nickname }: { gender: GenderType; password: string; nickname: string }) => {
+    if (!usertype || usertype === 'visitor') {
+      message.error('出错啦');
+      return;
+    }
+    const body: EditUserInfoParams = {
+      gender,
+      nickname,
+      uid: Number(uid),
+    };
+    if (password) body['password'] = password;
+    try {
+      await editUserInfo(body, usertype === 'consultant' ? 'counsellor' : usertype);
+      message.success('更新信息成功');
+      navigate('/admin');
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <Layout className='h-[100vh] overflow-hidden' style={{ maxHeight: '100vh' }}>
       <Header>
@@ -141,32 +160,6 @@ const AdminLayout = () => {
           <h1 className='text-xl font-[500]'>Heart Journey</h1>
         </div>
         <div className='absolute right-4 top-0'>
-          {/* <Select
-            defaultValue={usertype}
-            onChange={(value) => {
-              console.log(value);
-              dispatch(setUserInfo({ usertype: value }));
-            }}
-            className='w-40'
-            options={[
-              {
-                value: 'admin',
-                label: '管理员',
-              },
-              {
-                value: 'consultant',
-                label: '咨询师',
-              },
-              {
-                value: 'supervisor',
-                label: '督导',
-              },
-              {
-                value: 'visitor',
-                label: '访客',
-              },
-            ]}
-          /> */}
           <Dropdown
             menu={{
               items: [
@@ -195,6 +188,7 @@ const AdminLayout = () => {
                 } else if (key === '2') {
                   // 退出登录逻辑
                   localStorage.removeItem('token');
+                  localStorage.clear();
                   navigate('/admin/login');
                 }
               },
@@ -228,56 +222,35 @@ const AdminLayout = () => {
         </Content>
       </Layout>
       <Modal title='更新个人信息' styles={{ header: { marginBottom: '16px' } }} open={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
-        <Form
-          form={form}
-          name='update_info'
-          initialValues={{
-            name: '',
-            email: '',
-            phone: '',
-          }}
-          scrollToFirstError
-        >
-          <Form.Item
-            name='name'
-            label='姓名'
+        <Form form={form} name='update_info' initialValues={{ nickname, email, gender }} scrollToFirstError>
+          <ProFormText
+            fieldProps={{ variant: 'outlined', styles: { affixWrapper: { backgroundColor: '#ffffff80' } } }}
+            name='nickname'
+            label='昵称'
+            placeholder='请输入昵称'
+            rules={[{ required: true, message: '昵称不能为空' }]}
+          />
+          <ProFormText name='email' label='邮箱' readonly />
+          <ProFormRadio.Group
+            name='gender'
+            label='性别'
+            options={[
+              { label: '男', value: 'male' },
+              { label: '女', value: 'female' },
+              { label: '保密', value: 'unknown' },
+            ]}
+          />
+          <ProFormText.Password
+            fieldProps={{ variant: 'outlined', styles: { affixWrapper: { backgroundColor: '#ffffff80' } } }}
+            label='密码'
+            name='password'
             rules={[
               {
-                required: true,
-                message: '请输入姓名',
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,20}$/,
+                message: '密码长度为 8 到 20 位，需要包含大写字母、小写字母、数字',
               },
             ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name='email'
-            label='邮箱'
-            rules={[
-              {
-                type: 'email',
-                message: '请输入有效的邮箱地址',
-              },
-              {
-                required: true,
-                message: '请输入邮箱地址',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name='phone'
-            label='电话'
-            rules={[
-              {
-                required: true,
-                message: '请输入电话号码',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
+          />
         </Form>
       </Modal>
     </Layout>

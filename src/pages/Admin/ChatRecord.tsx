@@ -5,6 +5,7 @@ import { useState } from 'react';
 import ConsultRecordDetailModal from '../../components/ConsultRecordDetail';
 import { exportConsultantRecord, getConsultRecord } from '@/service/Admin/chatRecord';
 import downloadTXT from '@/utils/download';
+import { fuzzySearch } from '@/service/Admin/user';
 
 type RecordTableItem = {
   key: number;
@@ -40,6 +41,7 @@ const ChatRecordTable = ({ dataSource, pagination = true }: { dataSource: Record
   const [currentSession, setCurrentSession] = useState<{
     sessionID: number;
     recordID: number;
+    comment: string;
   } | null>(null);
 
   const columns = [
@@ -78,18 +80,14 @@ const ChatRecordTable = ({ dataSource, pagination = true }: { dataSource: Record
       ),
     },
     {
-      dataIndex: 'help',
-      title: '督导求助',
-    },
-    {
       dataIndex: 'action',
       title: '操作',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      render: (_: any, { sessionID, recordID, consultant, visitor, date }: RecordTableItem) => (
+      render: (_: any, { sessionID, recordID, consultant, visitor, date, comment }: RecordTableItem) => (
         <Space>
           <Button
             onClick={() => {
-              setCurrentSession({ sessionID, recordID });
+              setCurrentSession({ sessionID, recordID, comment });
               setShowDetailModal(true);
             }}
             type='primary'
@@ -150,18 +148,20 @@ const ChatRecord = () => {
         endTime,
       });
       setDataSource(
-        res.helpRecords.map(({ consultantName, userName, duration, timestamp, userRating, appraisal }, index) => ({
-          key: index,
-          consultant: consultantName,
-          visitor: userName,
-          duration: String(duration),
-          date: dayjs(timestamp),
-          score: userRating,
-          comment: appraisal,
-          help: '',
-          sessionID: 0,
-          recordID: 0,
-        })),
+        res.consultantRecords.map(
+          ({ counsellorName: consultantName, userName, duration, timestamp, userRating, appraisal, sessionID, recordID }, index) => ({
+            key: index,
+            consultant: consultantName,
+            visitor: userName,
+            duration: String(duration),
+            date: dayjs(timestamp),
+            score: userRating,
+            comment: appraisal,
+            help: '',
+            sessionID: sessionID,
+            recordID: recordID,
+          }),
+        ),
       );
     } catch (e) {
       console.log(e);
@@ -201,15 +201,19 @@ const ChatRecord = () => {
           <ProFormSelect.SearchSelect
             name='consultant'
             label='咨询师'
-            debounceTime={200}
+            debounceTime={500}
             mode='single'
+            rules={[
+              {
+                required: true,
+              },
+            ]}
             request={async ({ keyWords = '' }) => {
-              return [
-                { label: '1号', value: '1' },
-                { label: '2号', value: '2' },
-              ].filter(({ value, label }) => {
-                return value.includes(keyWords) || label.includes(keyWords);
-              });
+              const res = await fuzzySearch(keyWords, 'counsellor');
+              return res.infos.map(({ id, nickname }) => ({
+                label: `${id} ${nickname}`,
+                value: id,
+              }));
             }}
             colProps={{
               span: 4,
@@ -218,15 +222,14 @@ const ChatRecord = () => {
           <ProFormSelect.SearchSelect
             name='visitor'
             label='访客'
-            debounceTime={200}
+            debounceTime={500}
             mode='single'
             request={async ({ keyWords = '' }) => {
-              return [
-                { label: '1号', value: '1' },
-                { label: '2号', value: '2' },
-              ].filter(({ value, label }) => {
-                return value.includes(keyWords) || label.includes(keyWords);
-              });
+              const res = await fuzzySearch(keyWords, 'user');
+              return res.infos.map(({ id, nickname }) => ({
+                label: `${id} ${nickname}`,
+                value: id,
+              }));
             }}
             colProps={{
               span: 4,

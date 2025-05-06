@@ -1,5 +1,5 @@
 type MessageTypes = 'sendMsg' | 'requestMsg' | 'ackMsg' | 'registerConnection' | 'createSession' | 'closeSession' | 'Heartbeat';
-type ContentTypes = 'TEXT' | 'IMAGE' | 'RECORD' | 'FILE' | 'BIGFILE';
+type ContentTypes = 'TEXT' | 'IMAGE' | 'RECORD' | 'FILE' | 'BIGFILE' | 'VOICE';
 type MessageStatus = 'success' | 'fail' | 'pending';
 
 // 数据库的消息格式

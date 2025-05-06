@@ -1,20 +1,25 @@
 import { PictureTwoTone, SendOutlined } from '@ant-design/icons';
 import { Flex, Form, Input, message, Image, Button } from 'antd';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { concatMessageList, initSession, sendMessage } from '../../store/chat/chatSlice';
+import { concatMessageList, createSession, initSession, sendMessage } from '../../store/chat/chatSlice';
 import { RootState } from '../../store/store';
 import { getSessionMessages } from '@/service/session';
+import MessageList from '@/components/MessageList';
+import dayjs from 'dayjs';
+import { getDayDuty } from '@/service/Admin/schedule';
 
 const AdminChat = () => {
   const [form] = Form.useForm();
-  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [scroll, setScroll] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { info } = useParams();
   const { uid } = useSelector((state: RootState) => state.user);
-  const { isSessionClosed } = useSelector((state: RootState) => state.chat);
+  const { isSessionClosed, sessionID } = useSelector((state: RootState) => state.chat);
+  const currentSessionID = useMemo(() => sessionID, []);
+  const [supervisorID, setSupervisorID] = useState<number | null>(null);
 
   useEffect(() => {
     if (info) {
@@ -47,17 +52,17 @@ const AdminChat = () => {
     }
   }, [info]);
 
-  const _scrollToBottom = () => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  };
-
   const { messageList } = useSelector((state: RootState) => state.chat);
 
   useEffect(() => {
-    _scrollToBottom();
+    setScroll((prev) => !prev);
   }, [messageList]);
+
+  useEffect(() => {
+    if (isSessionClosed) {
+      navigate('/admin');
+    }
+  }, [isSessionClosed]);
 
   const onClickSend = () => {
     if (isSessionClosed) {
@@ -72,40 +77,53 @@ const AdminChat = () => {
       }
       dispatch(sendMessage({ content, contentType: 'TEXT' }));
       form.resetFields();
-      _scrollToBottom();
+      setScroll((prev) => !prev);
     });
   };
 
+  useEffect(() => {
+    if (sessionID && supervisorID && sessionID !== currentSessionID) {
+      // 替换当前页面
+      navigate(`/admin/session/${uid}-${supervisorID}-${sessionID}`);
+    }
+  }, [sessionID]);
+
+  const getSupervisorHelp = async () => {
+    try {
+      const res = await getDayDuty(dayjs(), 'supervisor');
+      if (res.info.length) {
+        const id = res.info[0].id;
+        setSupervisorID(id);
+        dispatch(createSession({ receiverID: id }));
+      } else {
+        message.info('没有空闲的督导！');
+      }
+      console.log(res);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   return (
-    <div className='h-full relative'>
-      {/* chat */}
-      <div ref={chatContainerRef} className='overflow-y-auto'>
-        <Flex vertical>
-          {messageList.map(({ messageID: id, role, content }, index) =>
-            role ? (
-              <div key={index} className='w-full p-3 pl-[72px]'>
-                <Flex gap='small' justify='flex-end' align='flex-start'>
-                  <div className='bg-blue-500 text-white p-3 rounded-md break-words text-wrap max-w-[400px]'>
-                    <p className='leading-6'>{content}</p>
-                  </div>
-                  <Image preview={false} className='rounded-full flex-shrink-0' src='/avatar.svg' alt='avatar' width={44} height={44} />
-                </Flex>
-              </div>
-            ) : (
-              <div key={id} className='w-full p-3 pr-[72px]'>
-                <Flex gap='small' align='flex-start'>
-                  <Image preview={false} className='rounded-full flex-shrink-0' src='/avatar.svg' alt='avatar' width={44} height={44} />
-                  <div className='bg-gray-100 p-3 rounded-md break-words text-wrap max-w-[400px]'>
-                    <p className='leading-6'>{content}</p>
-                  </div>
-                </Flex>
-              </div>
-            ),
-          )}
-        </Flex>
+    <div className='h-full relative flex flex-col'>
+      <div className='absolute top-[-40px] right-2 flex gap-2 items-center'>
+        <Button onClick={getSupervisorHelp} color='primary' variant='outlined'>
+          求助督导
+        </Button>
+        <Button
+          onClick={() => {
+            dispatch(sendMessage({ content: '/close', contentType: 'TEXT' }));
+          }}
+          type='primary'
+          danger
+        >
+          结束咨询
+        </Button>
       </div>
+      {/* chat */}
+      <MessageList scroll={scroll} messageList={messageList} onCloseSession={() => {}} isAdmin={true} />
       {/* input */}
-      <div className='absolute bottom-0 left-0 right-0 w-full flex items-center gap-2 px-3 py-2'>
+      <div className='w-full flex items-center gap-2 px-3 py-2'>
         <PictureTwoTone className='text-[24px]' />
         <Form className='flex w-full gap-2 items-center' form={form} wrapperCol={{ span: 24 }}>
           <div className='flex-1 items-center justify-center'>
