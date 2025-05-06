@@ -1,8 +1,9 @@
 import { addConsultantRecord } from '@/service/session';
 import { shutDownSession } from '@/store/chat/chatSlice';
+import { RootState } from '@/store/store';
 import { ProFormRate, ProFormTextArea } from '@ant-design/pro-components';
 import { Form, Modal } from 'antd';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 const RateModal = ({
@@ -21,6 +22,7 @@ const RateModal = ({
   const [form] = Form.useForm();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { uid } = useSelector((state: RootState) => state.user);
 
   const onFinish = async ({ score, comment }: { score: number; comment: string }) => {
     dispatch(
@@ -29,9 +31,10 @@ const RateModal = ({
       }),
     );
     navigate('/');
-    
+
     await addConsultantRecord({
       ...data,
+      userID: Number(uid),
       userRating: score,
       appraisal: comment,
       counsellorAppraisal: '',
