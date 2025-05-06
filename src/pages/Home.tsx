@@ -9,6 +9,7 @@ import RunningConsultant from '../components/RunningConsultant';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 import { setUserInfo } from '../store/user/userSlice';
+import { PoweroffOutlined } from '@ant-design/icons';
 
 const MyDivider = () => {
   return (

@@ -1,6 +1,6 @@
 import { ROLE_MAP } from '@/layouts/AdminLayout';
 import { addConsultantDuty, addSupervisorDuty, deleteConsultantDuty, deleteSupervisorDuty, getAllDuty, getDayDuty } from '@/service/Admin/schedule';
-import { getAllConsultant, getAllSupervisor, UserInfo } from '@/service/Admin/user';
+import { getAllAllConsultant, getAllConsultant, getAllSupervisor, UserInfo } from '@/service/Admin/user';
 import { PlusOutlined } from '@ant-design/icons';
 import { ProFormSelect } from '@ant-design/pro-components';
 import { Avatar, Button, Calendar, Card, Col, Empty, Form, List, message, Modal, Row, Spin, Tabs } from 'antd';
@@ -203,7 +203,7 @@ const Schedule = () => {
     }
 
     // 发送请求更新状态和缓存
-    Promise.all([getAllSupervisor(), getAllConsultant()])
+    Promise.all([getAllSupervisor(), getAllAllConsultant()])
       .then(([supRes, conRes]) => {
         const supList = mymap(supRes.infos);
         const conList = mymap(conRes.infos);
@@ -268,7 +268,7 @@ const Schedule = () => {
             <div className='mb-4 text-center text-2xl font-medium text-black-second'>
               {selectedDate ? selectedDate.format('MM月DD日 dddd') : '请选择日期'}
             </div>
-            <Spin size='large' spinning={!currentDuty || !allConsultant || !allConsultant}>
+            <Spin size='large' spinning={!currentDuty}>
               <Tabs
                 defaultActiveKey='1'
                 centered

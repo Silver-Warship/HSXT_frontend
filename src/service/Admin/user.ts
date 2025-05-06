@@ -63,6 +63,7 @@ export type UserInfo = {
 };
 
 export type CounsullerInfo = {
+  id: number;
   nickname: string;
   email: string;
   counsellorID: number;
@@ -76,17 +77,17 @@ export const getAllSupervisor = (): Promise<{
   return request.get(`/api/getAll?role=supervisor`);
 };
 
+export const getAllAllConsultant = (): Promise<{
+  infos: UserInfo[];
+}> => {
+  return request.get(`/api/getAll?role=counsellor`);
+};
+
 export const getAllConsultant = (): Promise<{
   infos: CounsullerInfo[];
 }> => {
   return request.get(`/api/getOnDutyCounsellor?timestamp=${dayjs().valueOf()}`);
 };
-
-export const editConsultantInfo = (data: EditUserInfoParams) => {
-  return request.post('/api/user/editprofile', data);
-};
-
-// TODO
 
 export const fuzzySearch = (
   nickname: string,

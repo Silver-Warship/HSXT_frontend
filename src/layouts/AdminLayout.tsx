@@ -184,7 +184,8 @@ const AdminLayout = () => {
               ],
               onClick: ({ key }) => {
                 if (key === '1') {
-                  showModal();
+                  if (usertype !== 'admin') showModal();
+                  else message.info('管理员暂不支持该功能！');
                 } else if (key === '2') {
                   localStorage.clear();
                   navigate('/admin/login');

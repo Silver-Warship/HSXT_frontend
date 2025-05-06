@@ -1,14 +1,14 @@
 import request from '@/utils/request';
 import { Dayjs } from 'dayjs';
 
-/** 添加某一天的咨询师排班 */
+/** 获取咨询记录 */
 export const getConsultRecord = ({
   counsellorID,
   startTime,
   endTime,
   userID,
 }: {
-  counsellorID: number;
+  counsellorID?: number;
   startTime?: Dayjs;
   endTime?: Dayjs;
   userID?: number;
@@ -32,7 +32,7 @@ export const getConsultRecord = ({
   const startTimestamp = startTime?.valueOf();
   const endTimestamp = endTime?.valueOf();
   return request.get(
-    `/api/getConsultantRecord?counsellorID=${counsellorID}${userID ? `&userID=${userID}` : ''}${
+    `/api/getConsultantRecord?${counsellorID ? `counsellorID=${counsellorID}` : ''}${userID ? `&userID=${userID}` : ''}${
       startTimestamp ? `&startTimestamp=${startTimestamp}` : ''
     }${endTimestamp ? `&endTimestamp=${endTimestamp}` : ''}`,
   );

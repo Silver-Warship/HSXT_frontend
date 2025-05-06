@@ -11,7 +11,7 @@ const Session = () => {
           height: 'calc(100% - 56px)',
         },
       }}
-      title={`咨询者-小明`}
+      title={`咨询者`}
     >
       <AdminChat />
     </Card>
