@@ -1,7 +1,8 @@
 import { Middleware } from '@reduxjs/toolkit';
 import { _webSocketConnected, _webSocketError, concatMessageList, _updateMessageStatus, setInfo, _webSocketClosed, sessionClosed } from './chatSlice';
 import HSTime from '../../utils/time';
-import { message as antdMessage } from 'antd';
+import { message as antdMessage, message } from 'antd';
+import dayjs from 'dayjs';
 
 const isChatRegisterAction = (action: unknown): action is { type: 'chat/register'; payload: { url: string; userID: number } } => {
   return typeof action === 'object' && action !== null && 'type' in action && action.type === 'chat/register';
@@ -82,7 +83,6 @@ const chatMiddleware: Middleware = (store) => {
       const message: ReceiveMessage.Response = JSON.parse(event.data);
       const sessionID = store.getState().chat.sessionID;
       if (message.seq === 'type-newMessage') {
-        console.log('有新消息！', message, sessionID);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((message as any).data.sessionID !== sessionID) return;
         // 无seq，为服务器主动推送的新消息
@@ -150,6 +150,9 @@ const chatMiddleware: Middleware = (store) => {
       case 'closeSession':
         handleCloseSessionResponse(message as ReceiveMessage.CloseSessionResponse);
         break;
+      case 'sendMsgToGPT':
+        handleSendMsgToGPTResponse(message as ReceiveMessage.SendMsgToGPTResponse);
+        break;
       default:
         break;
     }
@@ -198,6 +201,22 @@ const chatMiddleware: Middleware = (store) => {
     const { data, codeMsg } = message;
     if (!data) antdMessage.info(codeMsg);
   };
+
+  const handleSendMsgToGPTResponse = (message: ReceiveMessage.SendMsgToGPTResponse) => {
+    const {content, timestamp} = message.data;
+    // 更新消息列表
+    store.dispatch(
+      concatMessageList(
+        [{
+          content: content,
+          contentType: 'TEXT',
+          timestamp: timestamp,
+          role: 0,
+          status: 'success' as MessageStatus,
+        }]
+      ),
+    )
+  }
 
   // 通用发送消息函数
   const _send = (message: SendMessage.Message) => {
@@ -266,6 +285,33 @@ const chatMiddleware: Middleware = (store) => {
     _send(message);
   };
 
+  // 发送消息给ai
+  const sendMsgToGPT = (content: string) => {
+    const seq = addSeq('sendMsgToGPT');
+    store.dispatch(
+      concatMessageList([
+        {
+          seq,
+          role: 1,
+          content: content,
+          contentType: 'TEXT',
+          timestamp: HSTime.timestamp(),
+          status: 'pending',
+        },
+      ]),
+    );
+    const message: SendMessage.SendMsgToGPT = {
+      type: 'sendMsgToGPT',
+      seq,
+      data: {
+        senderID: store.getState().chat.userID,
+        content: content,
+        timestamp: HSTime.timestamp()
+      },
+    };
+    _send(message);
+  }
+
   // 确认帧
   const ackMsg = (data: number[]) => {
     const seq = addSeq('ackMsg');
@@ -327,6 +373,8 @@ const chatMiddleware: Middleware = (store) => {
       sendMsg(action.payload);
     } else if (isShutDownSessionAction(action)) {
       closeSessionMsg(action.payload.sessionID);
+    } else if (action.type === 'chat/sendMessageToGPT') { 
+      sendMsgToGPT(action.payload.content)
     }
     return next(action);
   };

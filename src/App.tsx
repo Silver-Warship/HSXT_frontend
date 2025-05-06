@@ -16,6 +16,7 @@ import ManageConsultant from './pages/Admin/ManageConsultant';
 import ManageVisitor from './pages/Admin/ManageVisitor';
 import Schedule from './pages/Admin/Schedule';
 import HelpRecord from './pages/Admin/HelpRecord';
+import GptChat from './pages/GptChat';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
           {/* 聊天页 */}
           <Route path='/chat/:info' element={Authed(<Chat />)} />
           <Route path='*' element={<NotFound />} />
+          <Route path='GptChat' element={Authed(<GptChat/>)} />
         </Route>
 
         {/* B端 */}

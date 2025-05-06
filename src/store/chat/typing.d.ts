@@ -1,4 +1,4 @@
-type MessageTypes = 'sendMsg' | 'requestMsg' | 'ackMsg' | 'registerConnection' | 'createSession' | 'closeSession' | 'Heartbeat';
+type MessageTypes = 'sendMsg' | 'requestMsg' | 'ackMsg' | 'registerConnection' | 'createSession' | 'closeSession' | 'Heartbeat' | 'sendMsgToGPT';
 type ContentTypes = 'TEXT' | 'IMAGE' | 'RECORD' | 'FILE' | 'BIGFILE' | 'VOICE';
 type MessageStatus = 'success' | 'fail' | 'pending';
 
@@ -32,6 +32,10 @@ namespace ReceiveMessage {
   type SendMsgData = {
     messageID: number;
   };
+  type SendMsgToGPTData = {
+    content: string;
+    timestamp: number;
+  };
   type RequestMsgData = {
     messages: RawMessage[];
   };
@@ -48,8 +52,9 @@ namespace ReceiveMessage {
   type RegisterConnectionResponse = Wrapper & { data: RegisterConnectionData };
   type createSessionResponse = Wrapper & { data: createSessionData };
   type CloseSessionResponse = Wrapper & { data: CloseSessionData };
+  type SendMsgToGPTResponse = Wrapper & { data: SendMsgToGPTData };
 
-  type Response = SendMsgResponse | RequestMsgResponse | AckMsgResponse | RegisterConnectionResponse | createSessionResponse | CloseSessionResponse;
+  type Response = SendMsgResponse | RequestMsgResponse | AckMsgResponse | RegisterConnectionResponse | createSessionResponse | CloseSessionResponse | SendMsgToGPTResponse;
 }
 
 // 发送的消息类型
@@ -65,6 +70,11 @@ namespace SendMessage {
     receiverID: number;
     content: string;
     contentType: ContentTypes;
+    timestamp: number;
+  };
+  type sendMsgToGPTData = {
+    senderID: number;
+    content: string;
     timestamp: number;
   };
   type RequestMsgData = {
@@ -95,6 +105,7 @@ namespace SendMessage {
   type createSession = Wrapper & { data: createSessionData };
   type CloseSession = Wrapper & { data: CloseSessionData };
   type Heartbeat = { type: MessageTypes; data: HeartbeatData };
+  type SendMsgToGPT = Wrapper & { data: sendMsgToGPTData };
 
-  type Message = SendMsg | RequestMsg | AckMsg | RegisterConnection | createSession | CloseSession | Heartbeat;
+  type Message = SendMsg | RequestMsg | AckMsg | RegisterConnection | createSession | CloseSession | Heartbeat | SendMsgToGPT;
 }
