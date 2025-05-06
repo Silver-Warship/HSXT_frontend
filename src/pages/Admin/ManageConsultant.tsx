@@ -1,8 +1,11 @@
 import AddAdminModal from '@/components/AddAdminModal';
+import { deleteRole } from '@/service/Admin/roleManage';
 import { fuzzySearch } from '@/service/Admin/user';
+import { RootState } from '@/store/store';
 import { ProForm, ProFormDigit, ProFormSelect, ProFormText } from '@ant-design/pro-components';
-import { Button, Card, Rate, Space, Table } from 'antd';
+import { Button, Card, message, Rate, Space, Table } from 'antd';
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 
 type ConsultantTableItem = {
   key: number;
@@ -14,6 +17,20 @@ type ConsultantTableItem = {
 
 const ManageConsultant = () => {
   const [showAddConsultant, setShowAddConsultant] = useState(false);
+
+  const deleteCounsellor = async (uid: number) => {
+    try {
+      const role = 'counsellor';
+      await deleteRole(uid, role);
+      setDataSource(
+        dataSource?.filter((item) => item.id!== uid)?? [],
+      );
+      message.success('删除成功');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      message.error('删除失败');
+    }
+  };
 
   const onFinish = async ({ name, id }: { name: string; id: number }) => {
     setDataSource(null);
@@ -68,12 +85,9 @@ const ManageConsultant = () => {
     {
       dataIndex: 'action',
       title: '操作',
-      render: () => (
+      render: (_, record: ConsultantTableItem) => (
         <Space>
-          <Button onClick={() => {}} type='primary'>
-            修改信息
-          </Button>
-          <Button danger={true} type='primary'>
+          <Button onClick={() =>deleteCounsellor(record.id)} danger={true} type='primary'>
             删除
           </Button>
         </Space>

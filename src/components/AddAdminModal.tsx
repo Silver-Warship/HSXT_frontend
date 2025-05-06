@@ -1,4 +1,5 @@
 import { ROLE_MAP } from '@/layouts/AdminLayout';
+import { addCounsellor, addSupervisor } from '@/service/Admin/roleManage';
 import { ProFormRadio, ProFormText } from '@ant-design/pro-components';
 import { Form, message, Modal } from 'antd';
 import { useState } from 'react';
@@ -15,7 +16,10 @@ const AddAdminModal = ({ visible, onHide, role }: { visible: boolean; onHide: ()
         form
           .validateFields()
           .then((res) => {
-            console.log(res);
+            if (role === 'consultant')
+              return addCounsellor(res.nickname, res.email, res.gender);
+            else if (role ==='supervisor')
+              return addSupervisor(res.nickname, res.email, res.gender);
           })
           .then(() => {
             message.success(`成功添加${ROLE_MAP[role]} !`);
