@@ -36,11 +36,11 @@ function App() {
           {/* 聊天页 */}
           <Route path='/chat/:info' element={Authed(<Chat />)} />
           <Route path='*' element={<NotFound />} />
-          <Route path='GptChat' element={Authed(<GptChat/>)} />
+          <Route path='GptChat' element={Authed(<GptChat />)} />
         </Route>
 
         {/* B端 */}
-        <Route path='admin'>
+        <Route path='/admin'>
           <Route index element={<Navigate to='/admin/dashboard' replace />} />
           {/* 登录页 */}
           <Route

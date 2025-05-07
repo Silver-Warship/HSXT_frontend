@@ -24,7 +24,7 @@ function setItemAsync(key: string, value: string) {
 export default function LoginPage({ isAdmin = false }: { isAdmin?: boolean }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [loginType, setLoginType] = useState<LoginType>('verifyCode');
+  const [loginType, setLoginType] = useState<LoginType>('password');
   const [form] = Form.useForm();
 
   const onFinish = async (values: {
@@ -97,7 +97,7 @@ export default function LoginPage({ isAdmin = false }: { isAdmin?: boolean }) {
 
   return (
     <div>
-      <div className='mx-auto pt-[5vh]'>
+      <div className='mx-auto pt-[5vh] text-center'>
         <LoginForm
           logo='https://github.githubassets.com/favicons/favicon.png'
           title='花狮心途'
@@ -242,6 +242,15 @@ export default function LoginPage({ isAdmin = false }: { isAdmin?: boolean }) {
             </div>
           )}
         </LoginForm>
+        <a
+          className='text-blue-400 underline select-none cursor-pointer'
+          onClick={() => {
+            if (isAdmin) navigate('/login');
+            else navigate('/admin/login');
+          }}
+        >
+          前往{isAdmin ? '访客' : '管理'}端
+        </a>
       </div>
     </div>
   );

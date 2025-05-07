@@ -12,7 +12,7 @@ const ConsultRecordDetail = ({ data }: { data: Session.GetSessionMessagesContent
         itemLayout='horizontal'
         loading={!data}
         dataSource={data ?? []}
-        renderItem={({ sendID, content, timestamp }) => (
+        renderItem={({ sendID, content, timestamp, contentType }) => (
           <List.Item>
             <List.Item.Meta
               avatar={<Avatar src={''} />}
@@ -22,7 +22,7 @@ const ConsultRecordDetail = ({ data }: { data: Session.GetSessionMessagesContent
                   <span style={{ color: 'gray', fontSize: '12px' }}>{dayjs(timestamp).format('YYYY-MM-DD HH:mm:ss')}</span>
                 </Space>
               }
-              description={content}
+              description={contentType === 'TEXT' ? content : '[该消息暂不支持文本格式]'}
             />
           </List.Item>
         )}

@@ -3,6 +3,7 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 // 创建 Axios 实例
 const instance: AxiosInstance = axios.create({
+  // baseURL: import.meta.env.VITE_APP_HTTP_URL,
   timeout: 10000, // 请求超时时间
 });
 

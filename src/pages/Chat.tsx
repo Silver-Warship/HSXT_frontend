@@ -10,6 +10,7 @@ import { Button } from 'antd';
 import getAudio from '@/utils/getAudio';
 import RateModal from '@/components/RateModal';
 import MessageList from '@/components/MessageList';
+import dayjs from 'dayjs';
 
 export default function Chat() {
   const [form] = Form.useForm();
@@ -169,7 +170,7 @@ export default function Chat() {
           <LeftOutlined onClick={() => navigate(-1)} />
           <div className='flex flex-col'>
             <p className='text-lg'>咨询师{}</p>
-            <p className='text-black-second text-sm'>extra info here</p>
+            <p className='text-black-second text-sm'>{dayjs().format('HH:mm')}</p>
           </div>
         </Space>
         <Image onClick={handleConfirm} preview={false} src='/exit.svg' alt='exit' width={28} height={28} />

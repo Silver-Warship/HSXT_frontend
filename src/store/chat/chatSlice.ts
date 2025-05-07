@@ -71,15 +71,15 @@ const chatSlice = createSlice({
     },
     // 用户发送一条消息
     sendMessage(
-      state,
-      action: PayloadAction<{
+      _state,
+      _action: PayloadAction<{
         content: string;
         contentType: ContentTypes;
       }>,
     ) {}, // 走中间件
     sendMessageToGPT(
-      state,
-      action: PayloadAction<{
+      _state,
+      _action: PayloadAction<{
         content: string;
       }>,
     ) {}, // 走中间件
@@ -101,7 +101,7 @@ const chatSlice = createSlice({
       message.error('关闭会话失败！');
     },
     // 用户主动关闭会话
-    shutDownSession(state, action: PayloadAction<{ sessionID: number }>) {},
+    shutDownSession(_state, _action: PayloadAction<{ sessionID: number }>) {},
   },
 });
 

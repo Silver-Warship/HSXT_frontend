@@ -1,6 +1,6 @@
 import { ROLE_MAP } from '@/layouts/AdminLayout';
 import { addConsultantDuty, addSupervisorDuty, deleteConsultantDuty, deleteSupervisorDuty, getAllDuty, getDayDuty } from '@/service/Admin/schedule';
-import { getAllAllConsultant, getAllConsultant, getAllSupervisor, UserInfo } from '@/service/Admin/user';
+import { fuzzySearch, getAllAllConsultant, getAllConsultant, getAllSupervisor, UserInfo } from '@/service/Admin/user';
 import { PlusOutlined } from '@ant-design/icons';
 import { ProFormSelect } from '@ant-design/pro-components';
 import { Avatar, Button, Calendar, Card, Col, Empty, Form, List, message, Modal, Row, Spin, Tabs } from 'antd';
@@ -50,7 +50,14 @@ const UserList = ({
           name='select'
           label=''
           debounceTime={200}
-          options={list}
+          // options={list}
+          request={async ({ keyWords = '' }) => {
+            const res = await fuzzySearch(keyWords, isConsultant ? 'counsellor' : 'supervisor');
+            return res.infos.map(({ id, nickname }) => ({
+              label: `${id} ${nickname}`,
+              value: id,
+            }));
+          }}
           placeholder={`添加${cnName}`}
           mode='single'
           rules={[{ required: true, message: `请选择${cnName}` }]}
@@ -146,8 +153,6 @@ const Schedule = () => {
     consultant: BriefInfo[];
     supervisor: BriefInfo[];
   } | null>(null);
-  const [allSupervisor, setAllSupervisor] = useState<Option[] | null>(null);
-  const [allConsultant, setAllConsultant] = useState<Option[] | null>(null);
 
   const getDutyDays = async (day: Dayjs) => {
     try {
@@ -186,37 +191,37 @@ const Schedule = () => {
     // 获取排班数据
     fetchData(dayjs());
 
-    const mymap = (info: UserInfo[]) => {
-      return info.map(({ id, nickname }) => ({
-        value: id,
-        label: `${id} ${nickname}`,
-      }));
-    };
+    // const mymap = (info: UserInfo[]) => {
+    //   return info.map(({ id, nickname }) => ({
+    //     value: id,
+    //     label: `${id} ${nickname}`,
+    //   }));
+    // };
     // 从缓存里拿所有的咨询师和督导列表
-    const allSupervisorTmp = localStorage.getItem('allSupervisor');
-    const allConsultantTmp = localStorage.getItem('allConsultant');
-    if (allSupervisorTmp) {
-      setAllSupervisor(JSON.parse(allSupervisorTmp));
-    }
-    if (allConsultantTmp) {
-      setAllConsultant(JSON.parse(allConsultantTmp));
-    }
+    // const allSupervisorTmp = localStorage.getItem('allSupervisor');
+    // const allConsultantTmp = localStorage.getItem('allConsultant');
+    // if (allSupervisorTmp) {
+    //   setAllSupervisor(JSON.parse(allSupervisorTmp));
+    // }
+    // if (allConsultantTmp) {
+    //   setAllConsultant(JSON.parse(allConsultantTmp));
+    // }
 
-    // 发送请求更新状态和缓存
-    Promise.all([getAllSupervisor(), getAllAllConsultant()])
-      .then(([supRes, conRes]) => {
-        const supList = mymap(supRes.infos);
-        const conList = mymap(conRes.infos);
+    // // 发送请求更新状态和缓存
+    // Promise.all([getAllSupervisor(), getAllAllConsultant()])
+    //   .then(([supRes, conRes]) => {
+    //     const supList = mymap(supRes.infos);
+    //     const conList = mymap(conRes.infos);
 
-        // setAllSupervisor(supList);
-        localStorage.setItem('allSupervisor', JSON.stringify(supList));
+    //     // setAllSupervisor(supList);
+    //     localStorage.setItem('allSupervisor', JSON.stringify(supList));
 
-        // setAllConsultant(conList);
-        localStorage.setItem('allConsultant', JSON.stringify(conList));
-      })
-      .catch((e) => {
-        console.log(e);
-      });
+    //     // setAllConsultant(conList);
+    //     localStorage.setItem('allConsultant', JSON.stringify(conList));
+    //   })
+    //   .catch((e) => {
+    //     console.log(e);
+    //   });
   }, []);
 
   return (
@@ -283,7 +288,7 @@ const Schedule = () => {
                         }}
                         dataSource={currentDuty?.consultant}
                         isConsultant={true}
-                        list={allConsultant ?? []}
+                        list={[]}
                         today={selectedDate}
                       />
                     ),
@@ -298,7 +303,7 @@ const Schedule = () => {
                         }}
                         dataSource={currentDuty?.supervisor}
                         isConsultant={false}
-                        list={allSupervisor ?? []}
+                        list={[]}
                         today={selectedDate}
                       />
                     ),
